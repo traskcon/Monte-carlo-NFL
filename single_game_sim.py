@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.stats as st
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
 
+#TODO: Rewrite as class/methods
 def rush_yds(team, rb_dist, defense_dist):
     # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
     # Weighting factors
@@ -39,16 +41,40 @@ def build_def_run_distributions(defense, run_data):
 
 def pass_yds():
     # Based on QB, WR, Def distributions, randomly sample and return pass yards on a given play
+    # Choose target based on target_pct
+    # Calculate weighted completion pct (qb_cmp_pct, catch_pct)
+    # If complete, sample from yardage distribution:
+        # QB_AY dist, YAC dist, Def pass yds dist
+    # Else netyards = 0
     pass
 
 def build_pass_distributions():
     # calculate/fit distributions of pass yds per attempt for QB, WR, Def
     pass
 
-def field_goal_attempt():
-    pass
+def field_goal_attempt(rng, fg_model, yardline):
+    make_prob = fg_model.predict_proba(np.array([[yardline]]))[0,0]
+    return make_prob >= rng.uniform()
 
-def punt():
+def fit_fg_model(fg_data):
+    # Fit Sigmoid/logistic model for fg make probability for kicker
+    fg_model = LogisticRegression(random_state=0).fit(fg_data["yardline"],fg_data["fg_result"])
+    return fg_model
+
+def punt(punt_dist, defense):
+    # Weighting factors
+    lambda_pr = 1
+    lambda_pay = 1
+    # Punt Returner projections from Mike Clay: https://g.espncdn.com/s/ffldraftkit/25/NFLDK2025_CS_ClayProjections2025.pdf?adddata=2025CS_ClayProjections2025
+    punt_returners = {"ATL":258/27,"BUF":317/28,"CAR":231/27,"CHI":257/29,"CIN":259/27,"CLE":252/27,"IND":283/28,"ARI":272/28,"DAL":276/27,"DEN":443/29,"DET":410/31,"GB":258/29,"HOU":290/30,
+              "JAX":259/27,"KC":266/28,"MIA":214/28,"MIN":284/30,"NO":258/27,"NE":437/29,"NYG":228/29,"NYJ":230/29,"TEN":252/27,"PIT":317/30,"PHI":247/28,"LV":258/27,"LAR":264/28,
+              "BAL":288/30,"LAC":336/27,"SEA":206/30,"SF":237/27,"TB":235/28,"WAS":243/25}
+    punt_yards = punt_dist.rvs(1)[0]
+    return (lambda_pr*punt_returners[defense]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
+    
+
+def build_punt_distribution():
+    # Fit punt air yardage distribution
     pass
 
 def determine_dist_type(down, distance):
@@ -65,13 +91,14 @@ def determine_dist_type(down, distance):
 def print_play_type(play_type, args):
     match play_type:
         case "pass":
-            net_yards, yardline, target = args
-            print("Result of play: {} to {} for {} yards, to the {} yardline".format(play_type,target,net_yards,yardline))
+            print("Result of play: {} to {} for {} yards, to the {} yardline".format(play_type,args[2],args[0],args[1]))
         case "run":
-            net_yards, yardline, rb = args
-            print("Result of play: {} by {} for {} yards, to the {} yardline".format(play_type,rb,net_yards,yardline))
+            print("Result of play: {} by {} for {} yards, to the {} yardline".format(play_type,args[2],args[0],args[1]))
         case "field_goal":
-            print("Result of play: {}".format(play_type))
+            if args[0]:
+                print("Result of play: Field Goal by {} is good!".format(args[1]))
+            else:
+                print("Result of play: Field Goal by {} is no good".format(args[1]))
         case "punt":
             print("Result of play: {}".format(play_type))
 
@@ -100,8 +127,7 @@ def sim_game(home, away, team_rosters, playcall_profiles, yard_dist, snap_counts
         # Based on what play_type is chosen, run yardage function
         match play_type:
             case "pass":
-                pass_yds()
-                net_yards = 0
+                net_yards = pass_yds()
             case "run":
                 rb_carries = snap_counts["rushers"]
                 rb = rng.choice(team_rosters[team_rosters["team"] == pos_team][["rb_1","rb_2"]].iloc[0],1,p=list(rb_carries[pos_team].values()))[0]
@@ -110,8 +136,12 @@ def sim_game(home, away, team_rosters, playcall_profiles, yard_dist, snap_counts
                 distance -= net_yards
                 play_details = [net_yards, yardline, rb]
             case "field_goal":
-                field_goal_attempt()
-                net_yards = 0
+                kicker = team_rosters[team_rosters["team"] == pos_team]["kicker"].iloc[0]
+                good = field_goal_attempt(rng,yard_dist["fg"][kicker],yardline)
+                if good:    
+                    scores[pos_team] += 3
+                    down, distance, yardline = 0, 10, 65
+                play_details = [good, kicker]
             case "punt":
                 punt()
                 net_yards = 0

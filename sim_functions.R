@@ -12,7 +12,7 @@ games <- load_pbp(2024) |>
   filter(play_type == "run") |>
   mutate(pos_team = ifelse(posteam_type == "home", home_team, away_team)) |>
   mutate(def_team = ifelse(posteam_type == "home", away_team, home_team)) |>
-  select(rusher_player_name, pos_team, yards_gained)
+  select(rusher_player_name, rusher_player_id, pos_team, def_team, yards_gained)
 
 ggplot(games, aes(x=yards_gained)) + geom_histogram()
 write.csv(games, "c:/users/geniu/Documents/Monte-carlo-NFL/2024_rushes.csv")
