@@ -1,33 +1,33 @@
-team,coach,qb,wr_1,wr_2,wr_3,rb_1,rb_2,te_1,te_2
-BUF,Sean McDermott,Josh Allen,,,,,,,
-NE,Mike Vrabel,Drake Maye,,,,,,,
-MIA,Mike McDaniel,Tua Tagovailoa,,,,,,,
-NYJ,Aaron Glenn,Justin Fields,,,,,,,
-BAL,John Harbaugh,Lamar Jackson,,,,,,,
-cIN,Zac Taylor,Joe Burrow,,,,,,,
-PIT,Mike Tomlin,Aaron Rodgers,,,,,,,
-cLE,Kevin Stefanski,Kenny Pickett,,,,,,,
-HOU,DeMeco Ryans,c.j. Stroud,,,,,,,
-IND,Shane Steichen,Daniel Jones,,,,,,,
-JAX,Liam coen,Trevor Lawrence,,,,,,,
-TEN,Brian callahan,cameron Ward,,,,,,,
-Kc,Andy Reid,Patrick Mahomes,,,,,,,
-DEN,Sean Payton,Bo Nix,,,,,,,
-LAc,Jim Harbaugh,Justin Herbert,,,,,,,
-LV,Pete carroll,Geno Smith,,,,,,,
-PHI,Nick Sirianni,Jalen Hurts,A.J. Brown,DeVonta Smith,Jahan Dotson,Saquon Barkley,Will Shipley,Dallas Goedert,Grant calcaterra
-WAS,Dan Quinn,,,,,,,,
-DAL,Brian Schottenheimer,Dak Prescott,ceeDee Lamb,George Pickens,Kavontae Turpin,Javonte Williams,Jaydon Blue,Jake Ferguson,Luke Schoonmaker
-NYG,Brian Daboll,,,,,,,,
-DET,Dan campbell,,,,,,,,
-GB,Matt LaFleur,,,,,,,,
-MIN,Kevin O'connell,,,,,,,,
-cHI,Ben Johnson,,,,,,,,
-TB,Todd Bowles,,,,,,,,
-ATL,Raheem Morris,,,,,,,,
-cAR,Dave canales,,,,,,,,
-NO,Kellen Moore,,,,,,,,
-LAR,Sean McVay,,,,,,,,
-ARI,Jonathan Gannon,,,,,,,,
-SEA,Mike Macdonald,,,,,,,,
-SF,Kyle Shanahan,,,,,,,,
+team,coach,qb,rb_1,rb_2,wr_1,wr_2,wr_3,wr_4,te_1,te_2,kicker,punter
+ARI,Jonathan Gannon,Kyler Murray,James Conner,Trey Benson,Marvin Harrison Jr,Michael Wilson,Greg Dortch,Zay Jones,Trey McBride,Elijah Higgins,Chad Ryland,Blake Gilikin
+ATL,Raheem Morris,Michael Penix Jr,Bijan Robinson,Tyler Allgeier,Drake London,Darnell Mooney,Ray-Ray McCloud,KhaDarel Hodge,Kyle Pitts,Charlie Woerner,Younghoe Koo,Bradley Pinion
+BAL,John Harbaugh,Lamar Jackson,Derrick Henry,Justice Hill,Zay Flowers,Rashod Bateman,DeAndre Hopkins,Devontez Walker,Mark Andrews,Isaiah Likely,Tyler Loop,Jordan Stout
+BUF,Sean McDermott,Josh Allen,James Cook,Ray Davis,Khalil Shakir,Keon Coleman,Josh Palmer,Curtis Samuel,Dalton Kincaid,Dawson Knox,Tyler Bass,Jake Camarda
+CAR,Dave Canales,Bryce Young,Chuba Hubbard,Rico Dowdle,Tetairoa McMillan,Adam Thielen,Xavier Legette,Jalen Coker,Ja'Tavion Sanders,Tommy Tremble,Matthew Wright,Sam Martin
+CHI,Ben Johnson,Caleb Williams,D'Andre Swift,Roschon Johnson,DJ Moore,Rome Odunze,Luther Burden,Olamide Zaccheaus,Colston Loveland,Cole Kmet,Cairo Santos,Tory Taylor
+CIN,Zac Taylor,Joe Burrow,Chase Brown,Zack Moss,Ja'Marr Chase,Tee Higgins,Andrei Iosivas,Jermaine Burton,Mike Gesicki,Tanner Hudson,Evan McPherson,Ryan Rehkow
+CLE,Kevin Stefanski,Kenny Pickett,Quinshon Judkins,Jerome Ford,Jerry Jeudy,Cedric Tillman,Diontae Johnson,Michael Woods,David Njoku,Harold Fannin Jr,Dustin Hopkins,Corey Bojorquez
+DAL,Brian Schottenheimer,Dak Prescott,Javonte Williams,Jaydon Blue,CeeDee Lamb,George Pickens,Kavontae Turpin,Jalen Tolbert,Jake Ferguson,Luke Schoonmaker,Brandon Aubrey,Bryan Anger
+DEN,Sean Payton,Bo Nix,RJ Harvey,Jaleel McLaughlin,Courtland Sutton,Marvin Mims,Pat Bryant,Troy Franklin,Evan Engram,Adam Trautman,Wil Lutz,Jeremy Crawshaw
+DET,Dan Campbell,Jared Goff,Jahmyr Gibbs,David Montgomery,Amon-Ra St Brown,Jameson Williams,Tim Patrick,Kalif Raymond,Sam LaPorta,Brock Wright,Jake Bates,Jack Fox
+GB,Matt LaFleur,Jordan Love,Josh Jacobs,MarShawn Lloyd,Matthew Golden,Jayden Reed,Romeo Doubs,Christian Watson,Tucker Kraft,Luke Musgrave,Brandon McManus,Daniel Whelan
+HOU,DeMeco Ryans,CJ Stroud,Joe Mixon,Woody Marks,Nico Collins,Jayden Higgins,Christian Kirk,Jaylin Noel,Dalton Schultz,Cade Stover,Kaimi Fairbairn,Tommy Townsend
+IND,Shane Steichen,Anthony Richardson,Jonathan Taylor,DJ Giddens,Michael Pittman Jr,Josh Downs,Adonai Mitchell,Alec Pierce,Tyler Warren,Mo Alie-Cox,Spencer Shrader,Rigoberto Sanchez
+JAX,Liam Coen,Trevor Lawrence,Travis Etienne,Tank Bigsby,Brian Thomas Jr,Travis Hunter,Parker Washington,Dyami Brown,Brenton Strange,Johnny Mundt,Cam Little,Logan Cooke
+KC,Andy Reid,Patrick Mahomes,Isiah Pacheco,Kareem Hunt,Xavier Worthy,Rashee Rice,Marquise Brown,JuJu Smith-Schuster,Travis Kelce,Noah Gray,Harrison Butker,Matt Araiza
+LAC,Jim Harbaugh,Justin Herbert,Omarion Hampton,Najee Harris,Ladd McConkey,Tre Harris,Mike Williams,Quentin Johnston,Tyler Conklin,Will Dissly,Cameron Dicker,JK Scott
+LAR,Sean McVay,Matthew Stafford,Kyren Williams,Blake Corum,Puka Nacua,Davante Adams,Tutu Atwell,Jordan Whittington,Tyler Higbee,Terrance Ferguson,Joshua Karty,Ethan Evans
+LV,Pete Carroll,Geno Smith,Ashton Jeanty,Raheem Mostert,Jakobi Meyers,Jack Bech,Tre Tucker,Donte Thornton Jr,Brock Bowers,Michael Mayer,Daniel Carlson,AJ Cole
+MIA,Mike McDaniel,Tua Tagovailoa,De'Von Achane,Jaylen Wright,Tyreek Hill,Jaylen Waddle,Nick Westbrook-Ikhine,Malik Washington,Jonnu Smith,Julian Hill,Jason Sanders,Jake Bailey
+MIN,Kevin O'Connell,JJ McCarthy,Aaron Jones,Jordan Mason,Justin Jefferson,Jordan Addison,Jalen Nailor,Rondale Moore,TJ Hockenson,Josh Oliver,Will Reichard,Ryan Wright
+NE,Mike Vrabel,Drake Maye,Rhamondre Stevenson,TreVeyon Henderson,Stefon Diggs,Kyle Williams,DeMario Douglas,Mack Hollins,Hunter Henry,Austin Hooper,Andres Borregales,Bryce Baringer
+NO,Kellen Moore,Tyler Shough,Alvin Kamara,Kendre Miller,Chris Olave,Rashid Shaheed,Brandin Cooks,Dante Pettis,Juwan Johnson,Foster Moreau,Blake Grupe,Matthew Hayball
+NYG,Brian Daboll,Jaxson Dart,Tyrone Tracy Jr,Cam Skattebo,Malik Nabers,Wan'Dale Robinson,Darius Slayton,Jalin Hyatt,Theo Johnson,Daniel Bellinger,Graham Gano,Jamie Gillan
+NYJ,Aaron Glenn,Justin Fields,Breece Hall,Braelon Allen,Garrett Wilson,Allen Lazard,Josh Reynolds,Malachi Corley,Mason Taylor,Jeremy Ruckert,Anders Carlson,Austin McNamara
+PHI,Nick Sirianni,Jalen Hurts,Saquon Barkley,Will Shipley,AJ Brown,DeVonta Smith,Jahan Dotson,Johnny Wilson,Dallas Goedert,Grant Calcaterra,Jake Elliott,Braden Mann
+PIT,Mike Tomlin,Aaron Rodgers,Kaleb Johnson,Jaylen Warren,DK Metcalf,Calvin Austin,Robert Woods,Roman Wilson,Pat Freiermuth,Darnell Washington,Chris Boswell,Cameron Johnston
+SEA,Mike Macdonald,Sam Darnold,Kenneth Walker,Zach Charbonnet,Jaxon Smith-Njigba,Cooper Kupp,Marquez Valdes-Scantling,Jake Bobo,Noah Fant,Elijah Arroyo,Jason Myers,Michael Dickson
+SF,Kyle Shanahan,Brock Purdy,Christian McCaffrey,Isaac Guerendo,Jauan Jennings,Ricky Pearsall,Brandon Aiyuk,Demarcus Robinson,George Kittle,Luke Farrell,Jake Moody,Thomas Morstead
+TB,Todd Bowles,Baker Mayfield,Bucky Irving,Rachaad White,Mike Evans,Chris Godwin,Emeka Egbuka,Jalen McMillan,Cade Otton,Payne Durham,Chase McLaughlin,Riley Dixon
+TEN,Brian Callahan,Cameron Ward,Tony Pollard,Tyjae Spears,Calvin Ridley,Tyler Lockett,Van Jefferson,Chimere Dike,Chigoziem Okonkwo,Josh Whyle,Joey Slye,Johnny Hekker
+WAS,Dan Quinn,Jayden Daniels,Austin Ekeler,Brian Robinson Jr,Terry McLaurin,Deebo Samuel,Noah Brown,Luke McCaffrey,Zach Ertz,Ben Sinnott,Matt Gay,Tress Way
