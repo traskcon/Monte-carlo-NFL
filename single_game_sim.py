@@ -4,13 +4,15 @@ import pandas as pd
 
 def rush_yds(team, rb_dist, defense_dist):
     # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
+    # Weighting factors
+    lambda_rb, lambda_ol, lambda_def = 1, 1, 1
     # Offensive line yards before contact for 2024
     ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,"IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,"HOU":2.4,
               "JAX":2.0,"KC":2.4,"MIA":2.3,"MIN":2.3,"NO":2.5,"NE":2.4,"NYG":2.5,"NYJ":2.1,"TEN":2.1,"PIT":2.2,"PHI":3.2,"LV":1.9,"LAR":2.2,
               "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
     rb_yac = rb_dist.rvs(1)[0]
     def_yards = defense_dist.rvs(1)[0]
-    return (rb_yac + def_yards + ol_ybc[team]) / 3
+    return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[team]) / (lambda_rb+lambda_ol+lambda_def)
 
 def build_rb_run_distributions(rb, run_data):
     # calculate/fit distributions of rush yards per carry for RB
