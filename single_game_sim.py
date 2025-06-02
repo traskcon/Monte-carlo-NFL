@@ -61,6 +61,19 @@ def determine_dist_type(down, distance):
             return "Long"
         else:
             return "Mid"
+        
+def print_play_type(play_type, args):
+    match play_type:
+        case "pass":
+            net_yards, yardline, target = args
+            print("Result of play: {} to {} for {} yards, to the {} yardline".format(play_type,target,net_yards,yardline))
+        case "run":
+            net_yards, yardline, rb = args
+            print("Result of play: {} by {} for {} yards, to the {} yardline".format(play_type,rb,net_yards,yardline))
+        case "field_goal":
+            print("Result of play: {}".format(play_type))
+        case "punt":
+            print("Result of play: {}".format(play_type))
 
 def sim_game(home, away, team_rosters, playcall_profiles, yard_dist, snap_counts, verbose=False):
     # Given two teams, simulate a single game and return both team's scores
@@ -95,6 +108,7 @@ def sim_game(home, away, team_rosters, playcall_profiles, yard_dist, snap_counts
                 net_yards = rush_yds(pos_team, yard_dist["rush_rb"][rb], yard_dist["rush_def"][def_team])
                 yardline -= net_yards
                 distance -= net_yards
+                play_details = [net_yards, yardline, rb]
             case "field_goal":
                 field_goal_attempt()
                 net_yards = 0
@@ -117,7 +131,7 @@ def sim_game(home, away, team_rosters, playcall_profiles, yard_dist, snap_counts
         else:
             down += 1
         if verbose:
-            print("Result of play: {} for {} yards to the {} yardline".format(play_type, net_yards, yardline))
+            print_play_type(play_type, play_details)
     return scores[home], scores[away]
 
 def monte_carlo_sim(n, home, away, verbose):
