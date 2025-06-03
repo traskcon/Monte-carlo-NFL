@@ -169,15 +169,21 @@ def monte_carlo_sim(n, home, away, verbose):
     home_scores, away_scores = [], []
     # Load relevant data
     rush_data = pd.read_csv("2024_rushes.csv")
+    fg_data = pd.read_csv("field_goals.csv")
     team_rosters = pd.read_csv("teams.csv")
     playcall_profiles = pd.read_csv("playcall_profiles.csv")
     rush_pct = pd.read_csv("rush_pct.csv", index_col="team")
+    player_ids = pd.read_csv("player_ids.csv", index_col=0)
+    id_dict = dict(zip(player_ids.full_name,player_ids.gsis_id))
     # create relevant distributions
     rbs = team_rosters.loc[team_rosters["team"].isin([home, away]), ["rb_1","rb_2"]].values.flatten().tolist()
+    kickers = team_rosters.loc[team_rosters["team"].isin([home, away]), ["kicker"]].values.flatten().tolist()
+    kicker_ids = [id_dict[kicker] for kicker in kickers]
     # TODO: change from rb names to rb ids
     rb_dists = {rb:build_rb_run_distributions(rb, rush_data) for rb in rbs}
     rush_def_dists = {defense:build_def_run_distributions(defense, rush_data) for defense in (home, away)}
-    yard_distributions = {"rush_rb":rb_dists, "rush_def":rush_def_dists}
+    fg_dists = {kicker:fit_fg_model(fg_data[fg_data["kicker_player_id"] == kicker]) for kicker in kicker_ids}
+    yard_distributions = {"rush_rb":rb_dists, "rush_def":rush_def_dists, "fg":fg_dists}
     # Load Snap/target percentages for each position
     rb_carries = rush_pct.to_dict("index")
     snap_counts = {"rushers":rb_carries}
