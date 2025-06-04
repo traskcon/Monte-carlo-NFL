@@ -14,9 +14,10 @@ class Monte_Carlo_Sim:
         self.rng = np.random.default_rng()
 
     def load_data(self):
-        self.rush_data = pd.read_csv("2024_rushes.csv")
+        rush_data = pd.read_csv("2024_rushes.csv")
         self.fg_data = pd.read_csv("field_goals.csv")
-        self.punt_data = pd.read_csv("punts.csv")
+        punt_data = pd.read_csv("punts.csv")
+        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data}
         self.team_rosters = pd.read_csv("teams.csv")
         self.playcall_profiles = pd.read_csv("playcall_profiles.csv")
         target_data = pd.read_csv("target_pct.csv", index_col="team")
@@ -34,7 +35,7 @@ class Monte_Carlo_Sim:
         name_dict = {id: name for name, id in self.id_dict.items()}
         return [name_dict[id] for id in player_ids]
     
-    def determine_dist_type(self, down, distance):
+    def __determine_dist_type(self, down, distance):
         if down == 1:
             return "All"
         else:
@@ -45,7 +46,7 @@ class Monte_Carlo_Sim:
             else:
                 return "Mid"
 
-    def print_play_type(self, play_type, args):
+    def __print_play_type(self, play_type, args):
         match play_type:
             case "pass":
                 print("Result of play: {} to {} for {:.1f} yards, to the {:.0f} yardline".format(play_type,args[2],args[0],args[1]))
@@ -65,33 +66,26 @@ class Monte_Carlo_Sim:
         kickers = self.team_rosters[["kicker"]].values.flatten().tolist()
         punters = self.team_rosters[["punter"]].values.flatten().tolist()
         teams = self.team_rosters[["team"]].values.flatten().tolist()
+        targets = self.team_rosters.iloc[:,3:11].to_numpy().flatten().tolist()
         # Fit Distributions/Models
-        self.rb_dists = {rb:self.build_rb_run_distributions(rb) for rb in self.get_ids(rbs)}
-        self.rush_def_dists = {defense:self.build_def_run_distributions(defense) for defense in teams}
+        self.rb_dists = {rb:self.build_yardage_distribution("rb",rb) for rb in self.get_ids(rbs)}
+        self.rush_def_dists = {defense:self.build_yardage_distribution("rush_def",defense) for defense in teams}
         self.fg_dists = {kicker:self.fit_fg_model(kicker) for kicker in self.get_ids(kickers)}
-        self.punt_dists = {punter:self.build_punt_distributions(punter) for punter in self.get_ids(punters)}
+        self.punt_dists = {punter:self.build_yardage_distribution("punt",punter) for punter in self.get_ids(punters)}
 
-    def build_pass_distributions(self):
-        pass
-    
-    def build_def_run_distributions(self, defense):
-        dist = getattr(st, "genextreme")
-        def_data = self.rush_data[self.rush_data["def_team"] == defense]["yards_gained"]
-        def_params = dist.fit(def_data)
-        def_dist = st.genextreme(*def_params)
-        return def_dist
-    
-    def build_rb_run_distributions(self, rb):
-        # calculate/fit distributions of rush yards per carry for RB
-        # Generalized Extreme Value Distribution chosen as best fitting distribution
-        dist = getattr(st, "genextreme")
-        rb_data = self.rush_data[self.rush_data["rusher_player_id"] == rb]["yards_gained"]
-        # Check there's enough RB specific data to be robust, otherwise use league average
-        rb_data = rb_data if len(rb_data) > 5 else self.rush_data["yards_gained"]
-        # Fit distribution
-        rb_params = dist.fit(rb_data)
-        rb_dist = st.genextreme(*rb_params)
-        return rb_dist
+    def build_yardage_distribution(self, dist_type, id):
+        # Generalized function for building yardage distributions
+        id_keys = {"punt":"punter_player_id", "rb":"rusher_player_id", "rush_def":"def_team"}
+        yard_keys = {"punt":"kick_distance", "rb":"yards_gained", "rush_def":"yards_gained"}
+        # Normal distribution for punts, genextreme for all others
+        dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
+        data = self.yard_data[dist_type]
+        yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
+        # Confirm there's enough specific data, otherwise use league average
+        yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
+        params = dist.fit(yard_data)
+        yard_dist = dist(*params)
+        return yard_dist
     
     def fit_fg_model(self, kicker):
         fg_data = self.fg_data[self.fg_data["kicker_player_id"] == kicker]
@@ -100,16 +94,6 @@ class Monte_Carlo_Sim:
         # Fit Sigmoid/logistic model for fg make probability
         fg_model = LogisticRegression(random_state=0).fit(fg_data[["yardline_100"]],fg_data["result"])
         return fg_model
-
-    def build_punt_distributions(self, punter):
-        # Punt distance modelled with normal distribution
-        dist = getattr(st, "norm")
-        punt_data = self.punt_data[self.punt_data["punter_player_id"] == punter]["kick_distance"]
-        punt_data = punt_data if len(punt_data) > 5 else self.punt_data["kick_distance"]
-        punt_params = dist.fit(punt_data)
-        punt_dist = st.norm(*punt_params)
-        return punt_dist
-        
 
     def rush_yds(self):
         # Pick RB1 or RB2 based on snap counts
@@ -141,14 +125,18 @@ class Monte_Carlo_Sim:
         # If complete, sample from yardage distribution:
             # QB_AY dist, YAC dist, Def pass yds dist
         # Else netyards = 0
-        return 0
+        return 0, target
 
-    def field_goal_attempt(self, kicker_id):
+    def field_goal_attempt(self):
+        kicker = self.team_rosters[self.team_rosters["team"] == self.pos_team]["kicker"].iloc[0]
+        kicker_id = self.get_ids([kicker])[0]
         fg_model = self.fg_dists[kicker_id]
         make_prob = fg_model.predict_proba(np.array([[self.yardline]]))[0,0]
-        return make_prob >= self.rng.uniform()
+        return make_prob >= self.rng.uniform(), kicker
     
-    def punt(self, punter_id):
+    def punt(self):
+        punter = self.team_rosters[self.team_rosters["team"] == self.pos_team]["punter"].iloc[0]
+        punter_id = self.get_ids([punter])[0]
         punt_dist = self.punt_dists[punter_id]
         # Weighting factors
         lambda_pr = 1
@@ -160,7 +148,7 @@ class Monte_Carlo_Sim:
         punt_yards = punt_dist.rvs(1)[0]
         return (lambda_pr*punt_returners[self.def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
-    def turnover(self, downs):
+    def __turnover(self, downs):
         self.down = 1 if downs else 0
         self.distance = 10
         self.yardline = 100 - self.yardline
@@ -171,9 +159,10 @@ class Monte_Carlo_Sim:
         home_scores, away_scores = [], []
         self.verbose = verbose
         for game in range(n):
-            t1 = time()
-            print(self.sim_game(home, away))
-            print("Single Game Sim Time: {:.4f}s".format(time()-t1))
+            home_score, away_score = self.sim_game(home, away)
+            home_scores.append(home_score)
+            away_scores.append(away_score)
+        return home_scores, away_scores
 
     def sim_game(self, home, away):
         # Given two teams, simulate a single game and return both teams' scores
@@ -188,7 +177,7 @@ class Monte_Carlo_Sim:
                 print("Down: {}, Distance: {:.0f} on the {:.0f} yardline".format(self.down, self.distance, self.yardline))
             # Set relevant variables
             redzone = self.yardline <= 20
-            dist_type = self.determine_dist_type(self.down, self.distance)
+            dist_type = self.__determine_dist_type(self.down, self.distance)
             # Get coach playcalling tendency for down and distance
             pos_coach = self.team_rosters.loc[self.team_rosters["team"] == self.pos_team, "coach"].iloc[0]
             tendencies = self.playcall_profiles.loc[(self.playcall_profiles["coach"]==pos_coach) & (self.playcall_profiles["down"]==self.down) 
@@ -198,29 +187,25 @@ class Monte_Carlo_Sim:
             # Based on what play_type is chosen, run yardage function
             match play_type:
                 case "pass":
-                    net_yards = self.pass_yds()
+                    net_yards, target = self.pass_yds()
                     self.yardline -= net_yards
                     self.distance -= net_yards
-                    play_details = [net_yards,self.yardline,"TEST"]
+                    play_details = [net_yards,self.yardline,target]
                 case "run":
                     net_yards, rb = self.rush_yds()
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards, self.yardline, rb]
                 case "field_goal":
-                    kicker = self.team_rosters[self.team_rosters["team"] == self.pos_team]["kicker"].iloc[0]
-                    kicker_id = self.get_ids([kicker])[0]
-                    good = self.field_goal_attempt(kicker_id)
+                    good, kicker = self.field_goal_attempt()
                     if good:    
                         scores[self.pos_team] += 3
                         self.down, self.distance, self.yardline = 0, 10, 65
                     play_details = [good, kicker]
                 case "punt":
-                    punter = self.team_rosters[self.team_rosters["team"] == self.pos_team]["punter"].iloc[0]
-                    punter_id = self.get_ids([punter])[0]
-                    net_yards = self.punt(punter_id)
+                    net_yards = self.punt()
                     self.yardline -= net_yards
-                    self.turnover(downs=False)
+                    self.__turnover(downs=False)
             # Update relevant variables (can happen inside the functions)
             if self.yardline < 0:
                 scores[self.pos_team] += 7 # Assuming automatic extra point on every touchdown (fix later)
@@ -228,16 +213,17 @@ class Monte_Carlo_Sim:
                 self.pos_team, self.def_team = self.def_team, self.pos_team
             elif self.down == 4 and self.distance > 0:
                 # Turnover on downs
-                self.turnover(downs=True)
+                self.__turnover(downs=True)
             elif self.distance <= 0:
                 # First down
                 self.down, self.distance = 1, 10
             else:
                 self.down += 1
             if self.verbose:
-                self.print_play_type(play_type, play_details)
+                self.__print_play_type(play_type, play_details)
         return scores[home], scores[away]
 
 
 sim_test = Monte_Carlo_Sim()
-sim_test.run_simulations("PHI","DAL",1)
+phi, dal = sim_test.run_simulations("PHI","DAL",100)
+print("Simulation Results - PHI: {:.2f}, DAL: {:.2f}".format(np.mean(phi), np.mean(dal)))
