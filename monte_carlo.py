@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats as st
 import pandas as pd
+from time import time
 from sklearn.linear_model import LogisticRegression
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -18,10 +19,11 @@ class Monte_Carlo_Sim:
         self.punt_data = pd.read_csv("punts.csv")
         self.team_rosters = pd.read_csv("teams.csv")
         self.playcall_profiles = pd.read_csv("playcall_profiles.csv")
+        target_data = pd.read_csv("target_pct.csv", index_col="team")
         rush_pct = pd.read_csv("rush_pct.csv", index_col="team")
         # Load Snap/target percentages for each position
-        rb_carries = rush_pct.to_dict("index")
-        self.snap_counts = {"rushers":rb_carries}
+        self.rb_carries = rush_pct.to_dict("index")
+        self.target_rates = target_data.to_dict("index")
         player_ids = pd.read_csv("player_ids.csv", index_col=0)
         self.id_dict = dict(zip(player_ids.full_name,player_ids.gsis_id))
 
@@ -69,6 +71,9 @@ class Monte_Carlo_Sim:
         self.fg_dists = {kicker:self.fit_fg_model(kicker) for kicker in self.get_ids(kickers)}
         self.punt_dists = {punter:self.build_punt_distributions(punter) for punter in self.get_ids(punters)}
 
+    def build_pass_distributions(self):
+        pass
+    
     def build_def_run_distributions(self, defense):
         dist = getattr(st, "genextreme")
         def_data = self.rush_data[self.rush_data["def_team"] == defense]["yards_gained"]
@@ -106,7 +111,11 @@ class Monte_Carlo_Sim:
         return punt_dist
         
 
-    def rush_yds(self, rb_id):
+    def rush_yds(self):
+        # Pick RB1 or RB2 based on snap counts
+        rb = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team][["rb_1","rb_2"]].iloc[0],1,
+                             p=list(self.rb_carries[self.pos_team].values()))[0]
+        rb_id = self.get_ids([rb])[0]
         # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
         rb_dist = self.rb_dists[rb_id]
         defense_dist = self.rush_def_dists[self.def_team]
@@ -118,11 +127,16 @@ class Monte_Carlo_Sim:
                 "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
         rb_yac = rb_dist.rvs(1)[0]
         def_yards = defense_dist.rvs(1)[0]
-        return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.pos_team]) / (lambda_rb+lambda_ol+lambda_def)
+        return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
     def pass_yds(self):
         # Based on QB, WR, Def distributions, randomly sample and return pass yards on a given play
+        qb = self.team_rosters[self.team_rosters["team"] == self.pos_team]["qb"].iloc[0]
+        qb_id = self.get_ids([qb])[0]
         # Choose target based on target_pct
+        target = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team].iloc[0,3:11], 1,
+                                 p=list(self.target_rates[self.pos_team].values()))[0]
+        target_id = self.get_ids([target])[0]
         # Calculate weighted completion pct (qb_cmp_pct, catch_pct)
         # If complete, sample from yardage distribution:
             # QB_AY dist, YAC dist, Def pass yds dist
@@ -157,7 +171,9 @@ class Monte_Carlo_Sim:
         home_scores, away_scores = [], []
         self.verbose = verbose
         for game in range(n):
+            t1 = time()
             print(self.sim_game(home, away))
+            print("Single Game Sim Time: {:.4f}s".format(time()-t1))
 
     def sim_game(self, home, away):
         # Given two teams, simulate a single game and return both teams' scores
@@ -183,12 +199,11 @@ class Monte_Carlo_Sim:
             match play_type:
                 case "pass":
                     net_yards = self.pass_yds()
+                    self.yardline -= net_yards
+                    self.distance -= net_yards
                     play_details = [net_yards,self.yardline,"TEST"]
                 case "run":
-                    rb_carries = self.snap_counts["rushers"]
-                    rb = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team][["rb_1","rb_2"]].iloc[0],1,p=list(rb_carries[self.pos_team].values()))[0]
-                    rb_id = self.get_ids([rb])[0]
-                    net_yards = self.rush_yds(rb_id)
+                    net_yards, rb = self.rush_yds()
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards, self.yardline, rb]
@@ -225,4 +240,4 @@ class Monte_Carlo_Sim:
 
 
 sim_test = Monte_Carlo_Sim()
-sim_test.run_simulations("PHI","DAL",1,True)
+sim_test.run_simulations("PHI","DAL",1)
