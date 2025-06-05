@@ -4,6 +4,7 @@ import pandas as pd
 from time import time
 from sklearn.linear_model import LogisticRegression
 import warnings
+from tqdm import tqdm
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 
@@ -137,7 +138,7 @@ class Monte_Carlo_Sim:
         # Use league averages for rookies
         comp_pct = self.comp_pct.get(qb_id, np.mean(list(self.comp_pct.values())))
         catch_pct = self.catch_pct.get(target_id, np.mean(list(self.catch_pct.values())))
-        if self.rng.uniform() > ((comp_pct + catch_pct)/2):
+        if self.rng.uniform() < ((comp_pct + catch_pct)/2):
             # If complete, sample from yardage distributions
             air_yards = self.ay_dists[qb_id].rvs(1)[0]
             yac = self.yac_dists[target_id].rvs(1)[0]
@@ -178,7 +179,7 @@ class Monte_Carlo_Sim:
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores = [], []
         self.verbose = verbose
-        for game in range(n):
+        for game in tqdm(range(n)):
             home_score, away_score = self.sim_game(home, away)
             home_scores.append(home_score)
             away_scores.append(away_score)
@@ -245,5 +246,5 @@ class Monte_Carlo_Sim:
 
 
 sim_test = Monte_Carlo_Sim()
-phi, dal = sim_test.run_simulations("PHI","DAL",1)
+phi, dal = sim_test.run_simulations("PHI","DAL",1000)
 print("Simulation Results - PHI: {:.2f}, DAL: {:.2f}".format(np.mean(phi), np.mean(dal)))
