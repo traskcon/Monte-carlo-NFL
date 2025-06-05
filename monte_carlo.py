@@ -139,14 +139,15 @@ class Monte_Carlo_Sim:
         comp_pct = self.comp_pct.get(qb_id, np.mean(list(self.comp_pct.values())))
         catch_pct = self.catch_pct.get(target_id, np.mean(list(self.catch_pct.values())))
         if self.rng.uniform() < ((comp_pct + catch_pct)/2):
+            self.stats["rec"][target] = self.stats["rec"].get(target,0) + 1
             # If complete, sample from yardage distributions
             air_yards = self.ay_dists[qb_id].rvs(1)[0]
             yac = self.yac_dists[target_id].rvs(1)[0]
             def_yards = self.pass_def_dists[self.def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
-            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (lambda_ay+lambda_yac+lambda_def), target
+            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (lambda_ay+lambda_yac+lambda_def), target, qb
         # Else netyards = 0
-        return 0, target
+        return 0, target, qb
 
     def field_goal_attempt(self):
         kicker = self.team_rosters[self.team_rosters["team"] == self.pos_team]["kicker"].iloc[0]
@@ -174,7 +175,7 @@ class Monte_Carlo_Sim:
         self.distance = 10
         self.yardline = 100 - self.yardline
         self.pos_team, self.def_team = self.def_team, self.pos_team
-    
+
     def run_simulations(self, home, away, n, verbose=False):
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores = [], []
@@ -189,6 +190,8 @@ class Monte_Carlo_Sim:
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
         scores = {home:0, away:0}
+        self.stats = {"pass_yards":{},"pass_tds":{},"rush_yards":{},"rush_tds":{},
+                     "rec":{}, "rec_yards":{}, "rec_tds":{}}
         self.down, self.distance, self.yardline = 1, 10, 65
         self.pos_team = self.rng.choice((home, away), 1)[0]
         self.def_team = home if self.pos_team == away else away
@@ -208,15 +211,18 @@ class Monte_Carlo_Sim:
             # Based on what play_type is chosen, run yardage function
             match play_type:
                 case "pass":
-                    net_yards, target = self.pass_yds()
+                    net_yards, target, qb = self.pass_yds()
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards,self.yardline,target]
+                    self.stats["pass_yards"][qb] = self.stats["pass_yards"].get(qb, 0) + net_yards
+                    self.stats["rec_yards"][target] = self.stats["rec_yards"].get(target, 0) + net_yards
                 case "run":
                     net_yards, rb = self.rush_yds()
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards, self.yardline, rb]
+                    self.stats["rush_yards"][rb] = self.stats["rush_yards"].get(rb, 0) + net_yards
                 case "field_goal":
                     good, kicker = self.field_goal_attempt()
                     if good:    
@@ -225,13 +231,18 @@ class Monte_Carlo_Sim:
                     play_details = [good, kicker]
                 case "punt":
                     net_yards = self.punt()
-                    self.yardline -= net_yards
+                    self.yardline -= net_yards if net_yards > 0 else 20
                     self.__turnover(downs=False)
             # Update relevant variables (can happen inside the functions)
             if self.yardline < 0:
                 scores[self.pos_team] += 7 # Assuming automatic extra point on every touchdown (fix later)
                 self.down, self.distance, self.yardline = 1, 10, 65
                 self.pos_team, self.def_team = self.def_team, self.pos_team
+                if play_type == "pass":
+                    self.stats["pass_tds"][qb] = self.stats["pass_tds"].get(qb, 0) + 1
+                    self.stats["rec_tds"][target] = self.stats["rec_tds"].get(target, 0) + 1
+                else:
+                    self.stats["rush_tds"][rb] = self.stats["rush_tds"].get(rb, 0) + 1
             elif self.down == 4 and self.distance > 0:
                 # Turnover on downs
                 self.__turnover(downs=True)
@@ -246,5 +257,6 @@ class Monte_Carlo_Sim:
 
 
 sim_test = Monte_Carlo_Sim()
-phi, dal = sim_test.run_simulations("PHI","DAL",1000)
+phi, dal = sim_test.run_simulations("PHI","DAL",1)
+print(sim_test.stats)
 print("Simulation Results - PHI: {:.2f}, DAL: {:.2f}".format(np.mean(phi), np.mean(dal)))
