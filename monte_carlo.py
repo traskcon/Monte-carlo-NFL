@@ -5,6 +5,7 @@ from time import time
 from sklearn.linear_model import LogisticRegression
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+pd.options.mode.chained_assignment = None
 
 class Monte_Carlo_Sim:
     def __init__(self):
@@ -17,7 +18,8 @@ class Monte_Carlo_Sim:
         rush_data = pd.read_csv("2024_rushes.csv")
         self.fg_data = pd.read_csv("field_goals.csv")
         punt_data = pd.read_csv("punts.csv")
-        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data}
+        pass_data = pd.read_csv("2024_passes.csv")
+        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, "ay":pass_data, "yac":pass_data, "pass_def":pass_data}
         self.team_rosters = pd.read_csv("teams.csv")
         self.playcall_profiles = pd.read_csv("playcall_profiles.csv")
         target_data = pd.read_csv("target_pct.csv", index_col="team")
@@ -27,6 +29,11 @@ class Monte_Carlo_Sim:
         self.target_rates = target_data.to_dict("index")
         player_ids = pd.read_csv("player_ids.csv", index_col=0)
         self.id_dict = dict(zip(player_ids.full_name,player_ids.gsis_id))
+        # Calculate Catch, Completion percentages
+        catch_pct = pass_data[["receiver_player_id","complete_pass"]].groupby(["receiver_player_id"]).mean()
+        self.catch_pct = dict(zip(catch_pct.index, catch_pct.complete_pass))
+        comp_pct = pass_data[["passer_player_id","complete_pass"]].groupby(["passer_player_id"]).mean()
+        self.comp_pct = dict(zip(comp_pct.index, comp_pct.complete_pass))
 
     def get_ids(self, player_names):
         return [self.id_dict[player] for player in player_names]
@@ -67,22 +74,29 @@ class Monte_Carlo_Sim:
         punters = self.team_rosters[["punter"]].values.flatten().tolist()
         teams = self.team_rosters[["team"]].values.flatten().tolist()
         targets = self.team_rosters.iloc[:,3:11].to_numpy().flatten().tolist()
+        qbs = self.team_rosters[["qb"]].to_numpy().flatten().tolist()
         # Fit Distributions/Models
         self.rb_dists = {rb:self.build_yardage_distribution("rb",rb) for rb in self.get_ids(rbs)}
         self.rush_def_dists = {defense:self.build_yardage_distribution("rush_def",defense) for defense in teams}
         self.fg_dists = {kicker:self.fit_fg_model(kicker) for kicker in self.get_ids(kickers)}
         self.punt_dists = {punter:self.build_yardage_distribution("punt",punter) for punter in self.get_ids(punters)}
+        self.ay_dists = {qb:self.build_yardage_distribution("ay",qb) for qb in self.get_ids(qbs)}
+        self.yac_dists = {target:self.build_yardage_distribution("yac",target) for target in self.get_ids(targets)}
+        self.pass_def_dists = {defense:self.build_yardage_distribution("pass_def",defense) for defense in teams}
 
     def build_yardage_distribution(self, dist_type, id):
         # Generalized function for building yardage distributions
-        id_keys = {"punt":"punter_player_id", "rb":"rusher_player_id", "rush_def":"def_team"}
-        yard_keys = {"punt":"kick_distance", "rb":"yards_gained", "rush_def":"yards_gained"}
+        id_keys = {"punt":"punter_player_id", "rb":"rusher_player_id", "rush_def":"def_team",
+                   "ay":"passer_player_id", "yac":"receiver_player_id", "pass_def":"def_team"}
+        yard_keys = {"punt":"kick_distance", "rb":"yards_gained", "rush_def":"yards_gained",
+                     "ay":"air_yards", "yac":"yards_after_catch", "pass_def":"yards_gained"}
         # Normal distribution for punts, genextreme for all others
         dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
         data = self.yard_data[dist_type]
         yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
         # Confirm there's enough specific data, otherwise use league average
         yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
+        yard_data.dropna(inplace=True)
         params = dist.fit(yard_data)
         yard_dist = dist(*params)
         return yard_dist
@@ -101,16 +115,14 @@ class Monte_Carlo_Sim:
                              p=list(self.rb_carries[self.pos_team].values()))[0]
         rb_id = self.get_ids([rb])[0]
         # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
-        rb_dist = self.rb_dists[rb_id]
-        defense_dist = self.rush_def_dists[self.def_team]
+        rb_yac = self.rb_dists[rb_id].rvs(1)[0]
+        def_yards = self.rush_def_dists[self.def_team].rvs(1)[0]
         # Weighting factors
-        lambda_rb, lambda_ol, lambda_def = 1, 1, 1
+        lambda_rb, lambda_ol, lambda_def = 1, 0.5, 1
         # Offensive line yards before contact for 2024
         ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,"IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,"HOU":2.4,
                 "JAX":2.0,"KC":2.4,"MIA":2.3,"MIN":2.3,"NO":2.5,"NE":2.4,"NYG":2.5,"NYJ":2.1,"TEN":2.1,"PIT":2.2,"PHI":3.2,"LV":1.9,"LAR":2.2,
                 "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
-        rb_yac = rb_dist.rvs(1)[0]
-        def_yards = defense_dist.rvs(1)[0]
         return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
     def pass_yds(self):
@@ -122,8 +134,16 @@ class Monte_Carlo_Sim:
                                  p=list(self.target_rates[self.pos_team].values()))[0]
         target_id = self.get_ids([target])[0]
         # Calculate weighted completion pct (qb_cmp_pct, catch_pct)
-        # If complete, sample from yardage distribution:
-            # QB_AY dist, YAC dist, Def pass yds dist
+        # Use league averages for rookies
+        comp_pct = self.comp_pct.get(qb_id, np.mean(list(self.comp_pct.values())))
+        catch_pct = self.catch_pct.get(target_id, np.mean(list(self.catch_pct.values())))
+        if self.rng.uniform() > ((comp_pct + catch_pct)/2):
+            # If complete, sample from yardage distributions
+            air_yards = self.ay_dists[qb_id].rvs(1)[0]
+            yac = self.yac_dists[target_id].rvs(1)[0]
+            def_yards = self.pass_def_dists[self.def_team].rvs(1)[0]
+            lambda_ay, lambda_yac, lambda_def = 1, 1, 1
+            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (lambda_ay+lambda_yac+lambda_def), target
         # Else netyards = 0
         return 0, target
 
@@ -225,5 +245,5 @@ class Monte_Carlo_Sim:
 
 
 sim_test = Monte_Carlo_Sim()
-phi, dal = sim_test.run_simulations("PHI","DAL",100)
+phi, dal = sim_test.run_simulations("PHI","DAL",1)
 print("Simulation Results - PHI: {:.2f}, DAL: {:.2f}".format(np.mean(phi), np.mean(dal)))

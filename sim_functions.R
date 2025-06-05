@@ -1,14 +1,6 @@
 library(nflverse)
 library(tidyverse)
 
-monte_carlo_model <- function(team, games, week_num, ...) {
-  # Simulation model must create result column where result is number of points 
-  # home team won by
-  games <- games |>
-    mutate(result = )
-  list(teams = teams, games = games)
-}
-
 rushes <- load_pbp(2024) |>
   filter(play_type == "run") |>
   mutate(pos_team = ifelse(posteam_type == "home", home_team, away_team)) |>
@@ -24,5 +16,6 @@ write.csv(rushes, "c:/users/geniu/Documents/Monte-carlo-NFL/2024_passes.csv")
 
 passes <- load_pbp(2024) |>
   filter(play_type == "pass") |>
+  mutate(def_team = ifelse(posteam_type == "home", away_team, home_team)) |>
   select(receiver_player_name, receiver_player_id, passer_player_name, 
          passer_player_id, complete_pass, air_yards, yards_after_catch)
