@@ -114,6 +114,7 @@ class Monte_Carlo_Sim:
 
     def rush_yds(self):
         # Pick RB1 or RB2 based on snap counts
+        # TODO: Add QB runs
         rb = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team][["rb_1","rb_2"]].iloc[0],1,
                              p=list(self.rb_carries[self.pos_team].values()))[0]
         rb_id = self.get_ids([rb])[0]
