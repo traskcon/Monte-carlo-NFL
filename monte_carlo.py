@@ -148,7 +148,7 @@ class Monte_Carlo_Sim:
             yac = self.yac_dists[target_id].rvs(1)[0]
             def_yards = self.pass_def_dists[self.def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
-            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (lambda_ay+lambda_yac+lambda_def), target, qb
+            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (0.5*lambda_ay+0.5*lambda_yac+lambda_def), target, qb
         # Else netyards = 0
         return 0, target, qb
 
