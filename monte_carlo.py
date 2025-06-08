@@ -3,6 +3,7 @@ import scipy.stats as st
 import pandas as pd
 from time import time
 from sklearn.linear_model import LogisticRegression
+from collections import defaultdict
 import warnings
 from tqdm import tqdm
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -20,7 +21,8 @@ class Monte_Carlo_Sim:
         self.fg_data = pd.read_csv("field_goals.csv")
         punt_data = pd.read_csv("punts.csv")
         pass_data = pd.read_csv("2024_passes.csv")
-        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, "ay":pass_data, "yac":pass_data, "pass_def":pass_data}
+        pass_yards = pass_data[pass_data["complete_pass"] == 1]
+        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
         self.team_rosters = pd.read_csv("teams.csv")
         self.playcall_profiles = pd.read_csv("playcall_profiles.csv")
         target_data = pd.read_csv("target_pct.csv", index_col="team")
@@ -179,11 +181,16 @@ class Monte_Carlo_Sim:
     def run_simulations(self, home, away, n, verbose=False):
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores = [], []
+        stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
+        self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
         for game in tqdm(range(n)):
             home_score, away_score = self.sim_game(home, away)
             home_scores.append(home_score)
             away_scores.append(away_score)
+            for stat, players in self.stats.items():
+                for player in players:
+                    self.sim_stats[stat][player].append(self.stats[stat][player])
         return home_scores, away_scores
 
     def sim_game(self, home, away):
@@ -212,6 +219,7 @@ class Monte_Carlo_Sim:
             match play_type:
                 case "pass":
                     net_yards, target, qb = self.pass_yds()
+                    net_yards = min(net_yards, self.yardline+1) #cap yards by yardline
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards,self.yardline,target]
@@ -219,6 +227,7 @@ class Monte_Carlo_Sim:
                     self.stats["rec_yards"][target] = self.stats["rec_yards"].get(target, 0) + net_yards
                 case "run":
                     net_yards, rb = self.rush_yds()
+                    net_yards = min(net_yards, self.yardline+1)
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards, self.yardline, rb]
@@ -254,9 +263,17 @@ class Monte_Carlo_Sim:
             if self.verbose:
                 self.__print_play_type(play_type, play_details)
         return scores[home], scores[away]
-
+    
+    def export_stats(self,path="stats.csv"):
+        reformed_stats = {(stat, player): values for stat, players in self.sim_stats.items() for player, values in players.items()}
+        n = max(len(value) for value in reformed_stats.values())
+        fill = [0] * n
+        padded_stats = {player:stats[:n] + fill[len(stats):] for player, stats in reformed_stats.items()}
+        stat_df = pd.DataFrame(padded_stats)
+        game_str = self.pos_team + "v" + self.def_team
+        stat_df.to_csv(game_str+path)
 
 sim_test = Monte_Carlo_Sim()
-phi, dal = sim_test.run_simulations("PHI","DAL",1)
-print(sim_test.stats)
+phi, dal = sim_test.run_simulations("PHI","DAL",100)
 print("Simulation Results - PHI: {:.2f}, DAL: {:.2f}".format(np.mean(phi), np.mean(dal)))
+sim_test.export_stats()
