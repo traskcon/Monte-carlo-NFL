@@ -17,20 +17,20 @@ class Monte_Carlo_Sim:
         self.rng = np.random.default_rng()
 
     def load_data(self):
-        rush_data = pd.read_csv("2024_rushes.csv")
-        self.fg_data = pd.read_csv("field_goals.csv")
-        punt_data = pd.read_csv("punts.csv")
-        pass_data = pd.read_csv("2024_passes.csv")
+        rush_data = pd.read_csv("./data/2024_rushes.csv")
+        self.fg_data = pd.read_csv("./data/field_goals.csv")
+        punt_data = pd.read_csv("./data/punts.csv")
+        pass_data = pd.read_csv("./data/2024_passes.csv")
         pass_yards = pass_data[pass_data["complete_pass"] == 1]
         self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
-        self.team_rosters = pd.read_csv("teams.csv")
-        self.playcall_profiles = pd.read_csv("playcall_profiles.csv")
-        target_data = pd.read_csv("target_pct.csv", index_col="team")
-        rush_pct = pd.read_csv("rush_pct.csv", index_col="team")
+        self.team_rosters = pd.read_csv("./data/teams.csv")
+        self.playcall_profiles = pd.read_csv("./data/playcall_profiles.csv")
+        target_data = pd.read_csv("./data/target_pct.csv", index_col="team")
+        rush_pct = pd.read_csv("./data/rush_pct.csv", index_col="team")
         # Load Snap/target percentages for each position
         self.rb_carries = rush_pct.to_dict("index")
         self.target_rates = target_data.to_dict("index")
-        player_ids = pd.read_csv("player_ids.csv", index_col=0)
+        player_ids = pd.read_csv("./data/player_ids.csv", index_col=0)
         self.id_dict = dict(zip(player_ids.full_name,player_ids.gsis_id))
         # Calculate Catch, Completion percentages
         catch_pct = pass_data[["receiver_player_id","complete_pass"]].groupby(["receiver_player_id"]).mean()
