@@ -265,17 +265,17 @@ class Monte_Carlo_Sim:
                 self.__print_play_type(play_type, play_details)
         return scores[home], scores[away]
     
-    def export_stats(self,path="stats.csv"):
+    def export_stats(self, home, away, path="stats.csv"):
         reformed_stats = {(stat, player): values for stat, players in self.sim_stats.items() for player, values in players.items()}
         n = max(len(value) for value in reformed_stats.values())
         fill = [0] * n
         padded_stats = {player:stats[:n] + fill[len(stats):] for player, stats in reformed_stats.items()}
         stat_df = pd.DataFrame(padded_stats)
-        game_str = self.pos_team + "v" + self.def_team
+        game_str = "./results" + home + "v" + away
         stat_df.to_csv(game_str+path)
 
 sim_test = Monte_Carlo_Sim()
 home, away = "KC", "LAC"
 home_scores, away_scores = sim_test.run_simulations(home,away,10000)
 print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
-sim_test.export_stats()
+sim_test.export_stats(home, away)
