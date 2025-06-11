@@ -4,40 +4,44 @@ from shinywidgets import render_plotly, output_widget
 import pandas as pd
 import numpy as np
 
-def load_game(home, away):
-    game_str = "./results/" + home + "v" + away + "stats.csv"
-    return pd.read_csv(game_str, header=[0,1], index_col=0)
-
-test_df = load_game("PHI", "DAL")
+test_df = pd.read_csv("./results/PHIvDALstats.csv", header=[0,1], index_col=0)
 players = pd.unique(test_df.columns.get_level_values(1))
 
-app_ui = ui.page_sidebar(
-    ui.sidebar(
-        ui.input_selectize(
-            "players",
-            "Select Player",
-            choices=list(players),
-            selected="Jalen Hurts"
+app_ui = ui.page_fluid(
+    ui.navset_tab(
+        ui.nav_panel("Visual",
+            ui.layout_sidebar(
+                sidebar=ui.sidebar(
+                    ui.input_selectize(
+                        "players",
+                        "Select Player",
+                        choices=list(players),
+                        selected="Jalen Hurts"
+                    ),
+                    ui.input_selectize(
+                        "stat",
+                        "Select Stat",
+                        choices={"pass_yards":"Pass Yards", "rec_yards":"Rec Yards", "rush_yards":"Rush Yards"},
+                        selected="pass_yards"
+                    ),
+                    ui.input_selectize(
+                        "game",
+                        "Select Matchup",
+                        choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
+                        selected="PHIvDAL"
+                    )
+                )
+            ),
+            ui.layout_columns(
+                ui.card(
+                    ui.card_header("Stats"),
+                    output_widget("stat_hist"),
+                    full_screen=True
+                )
+            )
         ),
-        ui.input_selectize(
-            "stat",
-            "Select Stat",
-            choices={"pass_yards":"Pass Yards", "rec_yards":"Rec Yards", "rush_yards":"Rush Yards"},
-            selected="pass_yards"
-        ),
-        ui.input_selectize(
-            "game",
-            "Select Matchup",
-            choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
-            selected="PHIvDAL"
-        )
-    ),
-    ui.layout_columns(
-        ui.card(
-            ui.card_header("Stats"),
-            output_widget("stat_hist"),
-            full_screen=True
-        )
+    ui.nav_panel("Sim","Sim content"),
+    id="tab",
     )
 )
 
