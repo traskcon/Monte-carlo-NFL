@@ -19,6 +19,18 @@ team_names = ["Arizona Cardinals","Atlanta Falcons","Baltimore Ravens","Buffalo 
               "New York Jets","Philadelphia Eagles","Pittsburgh Steelers","San Francisco 49ers",
               "Seattle Seahawks","Tampa Bay Buccaneers","Tennessee Titans","Washington Commanders"]
 
+team_dict = {"Arizona Cardinals":"ARI","Atlanta Falcons":"ATL","Baltimore Ravens":"BAL",
+             "Buffalo Bills":"BUF","Carolina Panthers":"CAR","Chicago Bears":"CHI",
+             "Cincinnati Bengals":"CIN","Cleveland Browns":"CLE","Dallas Cowboys":"DAL",
+             "Denver Broncos":"DEN","Detroit Lions":"DET","Green Bay Packers":"GB",
+              "Houston Texans":"HOU","Indianapolis Colts":"IND","Jacksonville Jaguars":"JAX",
+              "Kansas City Chiefs":"KC","Las Vegas Raiders":"LV","Los Angeles Chargers":"LAC",
+              "Los Angeles Rams":"LAR","Miami Dolphins":"MIA","Minnesota Vikings":"MIN",
+              "New England Patriots":"NE","New Orleans Saints":"NO","New York Giants":"NYG",
+              "New York Jets":"NYJ","Philadelphia Eagles":"PHI","Pittsburgh Steelers":"PIT",
+              "San Francisco 49ers":"SF","Seattle Seahawks":"SEA","Tampa Bay Buccaneers":"TB",
+              "Tennessee Titans":"TEN","Washington Commanders":"WAS"}
+
 app_ui = ui.page_fluid(
     ui.navset_tab(
         ui.nav_panel("Visualizations",
@@ -60,7 +72,8 @@ app_ui = ui.page_fluid(
                         "home_team",
                         "Home Team",
                         choices = team_names
-                    )
+                    ),
+                    ui.output_text("home_score")
                 ),
                 ui.card(
                     ui.card_header(""),
@@ -76,7 +89,8 @@ app_ui = ui.page_fluid(
                         "Away Team",
                         choices = team_names,
                         selected="Washington Commanders"
-                    )
+                    ),
+                    ui.output_text("away_score")
                 ),
                 col_widths=(5,2,5)
             )
@@ -89,7 +103,20 @@ def server(input, output, session):
 
     @reactive.event(input.run)
     def scores():
-        sim.run_simulations(input.home_team(), input.away_team(), input.n())
+        home, away = team_dict[input.home_team()], team_dict[input.away_team()]
+        home_scores, away_scores = sim.run_simulations(home, away, input.n())
+        return home_scores, away_scores
+
+    # Currently calling scores() for both home and away causes the sim to run twice, need to fix
+    @render.text
+    def home_score():
+        home_scores,_ = scores()
+        return "{:.0f}".format(np.mean(home_scores))
+    
+    @render.text
+    def away_score():
+        _,away_scores = scores()
+        return "{:.0f}".format(np.mean(away_scores))
 
     @render.text
     def time_estimate():
