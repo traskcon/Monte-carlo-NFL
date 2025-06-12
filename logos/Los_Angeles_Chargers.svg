@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="svg10"
+   width="638.41907"
+   height="281.5123"
+   viewBox="0 0 638.41908 281.51231"
+   sodipodi:docname="Los_Angeles_Chargers_2020.svg"
+   inkscape:version="1.0.2-2 (e86c870879, 2021-01-15)">
+  <metadata
+     id="metadata16">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs14" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1366"
+     inkscape:window-height="705"
+     id="namedview12"
+     showgrid="false"
+     inkscape:zoom="1"
+     inkscape:cx="334.28504"
+     inkscape:cy="173.16654"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer4"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:document-rotation="0" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="Layer 1"
+     transform="translate(53.360237,62.994071)">
+    <g
+       id="g1416">
+      <path
+         id="path847"
+         d="M 412.96026,79.917471 427.99327,114.5548 C 365.40216,83.03193 295.82718,60.402762 216.95694,60.761164 l 16.80843,18.198899 C 88.076217,84.66632 2.6053896,156.91106 -53.360237,218.51823 -52.05107,135.09992 7.7192699,59.76726 86.463397,13.777183 L 70.255619,-1.2674468 C 128.85949,-41.828382 211.05324,-53.209337 280.4258,-45.196707 l -9.86438,-17.797364 C 500.37077,-45.916832 597.71037,125.59063 583.7509,218.51823 548.35197,170.84398 486.56728,112.61014 412.96026,79.917471 Z"
+         inkscape:connector-curvature="0"
+         style="fill:#ffffff;fill-rule:evenodd;stroke:none;stroke-width:1.33088"
+         sodipodi:nodetypes="ccccccccccc" />
+      <path
+         id="path849"
+         d="m 198.2254,52.796653 c 66.91352,-2.225086 134.56043,7.85002 213.25312,44.836887 L 396.98145,64.229044 C 456.22581,87.181772 521.86665,130.02587 576.90806,196.48143 572.06133,95.856453 470.43913,-34.532558 285.6044,-53.177811 l 10.27754,18.540719 C 221.17647,-47.328873 137.23716,-34.121058 83.818521,-0.05949669 L 100.52408,15.444753 C 20.1157,58.567604 -32.703945,127.16362 -44.041759,196.48143 22.324193,127.16362 108.60641,79.286939 215.88174,71.914799 Z"
+         inkscape:connector-curvature="0"
+         style="fill:#0080c5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.33088"
+         sodipodi:nodetypes="ccccccccccc" />
+      <path
+         id="path851"
+         d="m 316.78878,-31.932475 12.42131,22.1363635 C 265.51723,-29.498322 172.95965,-28.305306 112.11743,3.4415697 L 129.56965,19.641054 C 73.804804,43.537907 14.963656,94.714875 -8.3259022,141.73867 29.868908,107.28553 112.96863,67.406553 181.13988,58.932644 L 164.20034,40.591039 C 229.71842,27.603907 317.03933,40.458298 379.29195,65.735665 L 367.21574,37.907994 C 413.06479,47.306117 498.27013,88.271912 548.06325,142.46046 516.74281,58.154446 422.53923,-14.531677 316.78878,-31.932475 Z"
+         inkscape:connector-curvature="0"
+         style="fill:#ffc20e;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.33088"
+         sodipodi:nodetypes="ccccccccccc" />
+    </g>
+  </g>
+</svg>
