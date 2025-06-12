@@ -9,9 +9,9 @@ players = pd.unique(test_df.columns.get_level_values(1))
 
 app_ui = ui.page_fluid(
     ui.navset_tab(
-        ui.nav_panel("Visual",
+        ui.nav_panel("Visualizations",
             ui.layout_sidebar(
-                sidebar=ui.sidebar(
+                ui.sidebar(
                     ui.input_selectize(
                         "players",
                         "Select Player",
@@ -29,10 +29,9 @@ app_ui = ui.page_fluid(
                         "Select Matchup",
                         choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
                         selected="PHIvDAL"
-                    )
-                )
-            ),
-            ui.layout_columns(
+                    ),
+                    position="left"
+                ),
                 ui.card(
                     ui.card_header("Stats"),
                     output_widget("stat_hist"),
@@ -40,7 +39,8 @@ app_ui = ui.page_fluid(
                 )
             )
         ),
-    ui.nav_panel("Sim","Sim content"),
+        ui.nav_panel("Sim",
+                 "Sim content"),
     id="tab",
     )
 )
