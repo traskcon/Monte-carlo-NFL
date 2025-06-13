@@ -33,36 +33,6 @@ team_dict = {"Arizona Cardinals":"ARI","Atlanta Falcons":"ATL","Baltimore Ravens
 
 app_ui = ui.page_fluid(
     ui.navset_tab(
-        ui.nav_panel("Visualizations",
-            ui.layout_sidebar(
-                ui.sidebar(
-                    ui.input_selectize(
-                        "players",
-                        "Select Player",
-                        choices=list(players),
-                        selected="Jalen Hurts"
-                    ),
-                    ui.input_selectize(
-                        "stat",
-                        "Select Stat",
-                        choices={"pass_yards":"Pass Yards", "rec_yards":"Rec Yards", "rush_yards":"Rush Yards"},
-                        selected="pass_yards"
-                    ),
-                    ui.input_selectize(
-                        "game",
-                        "Select Matchup",
-                        choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
-                        selected="PHIvDAL"
-                    ),
-                    position="left"
-                ),
-                ui.card(
-                    ui.card_header("Stats"),
-                    output_widget("stat_hist"),
-                    full_screen=True
-                )
-            )
-        ),
         ui.nav_panel("Sim",
             ui.layout_columns(
                 ui.card(
@@ -94,6 +64,36 @@ app_ui = ui.page_fluid(
                     ui.output_text("away_score")
                 ),
                 col_widths=(5,2,5)
+            )
+        ),
+        ui.nav_panel("Visualizations",
+            ui.layout_sidebar(
+                ui.sidebar(
+                    ui.input_selectize(
+                        "players",
+                        "Select Player",
+                        choices=list(players),
+                        selected="Jalen Hurts"
+                    ),
+                    ui.input_selectize(
+                        "stat",
+                        "Select Stat",
+                        choices={"pass_yards":"Pass Yards", "rec_yards":"Rec Yards", "rush_yards":"Rush Yards"},
+                        selected="pass_yards"
+                    ),
+                    ui.input_selectize(
+                        "game",
+                        "Select Matchup",
+                        choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
+                        selected="PHIvDAL"
+                    ),
+                    position="left"
+                ),
+                ui.card(
+                    ui.card_header("Stats"),
+                    output_widget("stat_hist"),
+                    full_screen=True
+                )
             )
         ),
     id="tab",
