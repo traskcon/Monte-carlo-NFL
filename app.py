@@ -79,6 +79,7 @@ app_ui = ui.page_fluid(
                     ui.card_header(""),
                     ui.input_numeric("n", "Number of Games:", 1000, min=1, max=100000),
                     ui.output_text("time_estimate"),
+                    ui.input_checkbox("stats","Export Stats"),
                     ui.input_action_button("run", "Run")
                 ),
                 ui.card(
@@ -110,6 +111,8 @@ def server(input, output, session):
         home_results, away_results = sim.run_simulations(home, away, input.n())
         home_scores.set(home_results)
         away_scores.set(away_results)
+        if input.stats():
+            sim.export_stats(home, away)
 
     # Currently calling scores() for both home and away causes the sim to run twice, need to fix
     @render.text
