@@ -274,8 +274,8 @@ class Monte_Carlo_Sim:
         game_str = path + home + "v" + away + suffix
         stat_df.to_csv(game_str)
 
-sim_test = Monte_Carlo_Sim()
-home, away = "PHI", "DAL"
-home_scores, away_scores = sim_test.run_simulations(home,away,10000)
-print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
-sim_test.export_stats(home, away)
+#sim_test = Monte_Carlo_Sim()
+#home, away = "PHI", "DAL"
+#home_scores, away_scores = sim_test.run_simulations(home,away,10000)
+#print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
+#sim_test.export_stats(home, away)

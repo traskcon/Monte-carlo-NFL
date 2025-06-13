@@ -100,23 +100,25 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
+    home_scores = reactive.value([0])
+    away_scores = reactive.value([0])
 
+    @reactive.effect()
     @reactive.event(input.run)
-    def scores():
+    def get_scores():
         home, away = team_dict[input.home_team()], team_dict[input.away_team()]
-        home_scores, away_scores = sim.run_simulations(home, away, input.n())
-        return home_scores, away_scores
+        home_results, away_results = sim.run_simulations(home, away, input.n())
+        home_scores.set(home_results)
+        away_scores.set(away_results)
 
     # Currently calling scores() for both home and away causes the sim to run twice, need to fix
     @render.text
     def home_score():
-        home_scores,_ = scores()
-        return "{:.0f}".format(np.mean(home_scores))
+        return "Home Score: {:.0f}".format(np.mean(home_scores.get()))
     
     @render.text
     def away_score():
-        _,away_scores = scores()
-        return "{:.0f}".format(np.mean(away_scores))
+        return "Away Score: {:.0f}".format(np.mean(away_scores.get()))
 
     @render.text
     def time_estimate():
