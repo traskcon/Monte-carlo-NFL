@@ -4,6 +4,12 @@ from shinywidgets import render_plotly, output_widget
 import pandas as pd
 import numpy as np
 from monte_carlo import Monte_Carlo_Sim
+import os
+
+def get_results(dir_path="./results", suffix="stats.csv"):
+    file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path,f))]
+    game_results = [f.replace(suffix,"") for f in file_names]
+    return game_results
 
 sim = Monte_Carlo_Sim()
 
@@ -84,7 +90,7 @@ app_ui = ui.page_fluid(
                     ui.input_selectize(
                         "game",
                         "Select Matchup",
-                        choices=["BUFvBAL","CHIvMIN","LACvKC","PHIvDAL"],
+                        choices=get_results(),
                         selected="PHIvDAL"
                     ),
                     position="left"
