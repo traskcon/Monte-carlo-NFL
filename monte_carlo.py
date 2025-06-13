@@ -6,6 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from collections import defaultdict
 import warnings
 from tqdm import tqdm
+from multiprocessing import Pool, cpu_count, freeze_support
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 
@@ -14,7 +15,6 @@ class Monte_Carlo_Sim:
         # Load relevant data
         self.load_data()
         self.build_distributions()
-        self.rng = np.random.default_rng()
 
     def load_data(self):
         rush_data = pd.read_csv("./data/2024_rushes.csv")
@@ -189,14 +189,27 @@ class Monte_Carlo_Sim:
             home_score, away_score = self.sim_game(home, away)
             home_scores.append(home_score)
             away_scores.append(away_score)
-            for stat, players in self.stats.items():
-                for player in players:
-                    self.sim_stats[stat][player].append(self.stats[stat][player])
             if progress is not None:
                 progress.set(game, message="Simulating Games")
         return home_scores, away_scores
+    
+    def parallel_sim(self, home, away, n, verbose=False):
+        stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
+        self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
+        self.verbose = verbose
+        with Pool(cpu_count()) as pool:
+            results = pool.starmap(self.sim_game, zip([home]*n, [away]*n))
+            home_scores, away_scores = zip(*results) #Unpack list of tuples into two lists
+        return home_scores, away_scores
+    
+    def update_player_stats(self):
+        # At the end of each simulated game, store player stats in a nested dictionary
+        for stat, players in self.stats.items():
+            for player in players:
+                self.sim_stats[stat][player].append(self.stats[stat][player])
 
     def sim_game(self, home, away):
+        self.rng = np.random.default_rng()
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
         scores = {home:0, away:0}
@@ -265,6 +278,7 @@ class Monte_Carlo_Sim:
                 self.down += 1
             if self.verbose:
                 self.__print_play_type(play_type, play_details)
+        self.update_player_stats()
         return scores[home], scores[away]
     
     def export_stats(self, home, away, path="./results/", suffix="stats.csv"):
@@ -276,8 +290,14 @@ class Monte_Carlo_Sim:
         game_str = path + home + "v" + away + suffix
         stat_df.to_csv(game_str)
 
-#sim_test = Monte_Carlo_Sim()
-#home, away = "PHI", "DAL"
-#home_scores, away_scores = sim_test.run_simulations(home,away,10000)
-#print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
-#sim_test.export_stats(home, away)
+if __name__ == "__main__":
+    freeze_support()
+    sim_test = Monte_Carlo_Sim()
+    home, away = "PHI", "DAL"
+    t3 = time()
+    home_scores, away_scores = sim_test.parallel_sim(home, away, 100)
+    t4 = time()
+    print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
+    print("Parallel Sim Time: {:.4f}s".format(t4-t3))
+    print(sim_test.stats)
+    sim_test.export_stats(home, away)

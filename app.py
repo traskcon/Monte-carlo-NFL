@@ -120,6 +120,7 @@ def server(input, output, session):
             home_scores.set(home_results)
             away_scores.set(away_results)
             if input.stats():
+                # currently stats only work in serial simulation, however parallel is significantly faster
                 sim.export_stats(home, away)
 
     @render.text
