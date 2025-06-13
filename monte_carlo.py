@@ -179,7 +179,7 @@ class Monte_Carlo_Sim:
         self.yardline = 100 - self.yardline
         self.pos_team, self.def_team = self.def_team, self.pos_team
 
-    def run_simulations(self, home, away, n, verbose=False):
+    def run_simulations(self, home, away, n, verbose=False, progress = None):
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores = [], []
         stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
@@ -192,6 +192,8 @@ class Monte_Carlo_Sim:
             for stat, players in self.stats.items():
                 for player in players:
                     self.sim_stats[stat][player].append(self.stats[stat][player])
+            if progress is not None:
+                progress.set(game, message="Simulating Games")
         return home_scores, away_scores
 
     def sim_game(self, home, away):

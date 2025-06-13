@@ -108,13 +108,14 @@ def server(input, output, session):
     @reactive.event(input.run)
     def get_scores():
         home, away = team_dict[input.home_team()], team_dict[input.away_team()]
-        home_results, away_results = sim.run_simulations(home, away, input.n())
-        home_scores.set(home_results)
-        away_scores.set(away_results)
-        if input.stats():
-            sim.export_stats(home, away)
+        with ui.Progress(min=1, max=input.n()) as p:
+            p.set(message="Simulating Games")
+            home_results, away_results = sim.run_simulations(home, away, input.n(), progress=p)
+            home_scores.set(home_results)
+            away_scores.set(away_results)
+            if input.stats():
+                sim.export_stats(home, away)
 
-    # Currently calling scores() for both home and away causes the sim to run twice, need to fix
     @render.text
     def home_score():
         return "Home Score: {:.0f}".format(np.mean(home_scores.get()))
