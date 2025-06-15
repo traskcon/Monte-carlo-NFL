@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from collections import defaultdict
 import warnings
 from tqdm import tqdm
-from multiprocessing import Pool, cpu_count, freeze_support
+from multiprocessing import Pool, cpu_count, freeze_support, Manager
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 

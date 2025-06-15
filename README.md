@@ -11,3 +11,14 @@ Serial vs Parallel:
 * 10,000 Games: ~27 minutes (Serial), 234.95s (Parallel, 8 cores)
 
 Back of napkin estimates place the number of simulations required to achieve a robust estimate at 10,000 - 100,000 depending on confidence level and score range
+
+## TODO
+* Add Documentation for existing sim capabilities
+    * Function descriptions/comments as well as high-level overview
+* Write-up proper README
+* Add cpu slider to sim interface
+* Add Home/description page to shiny app
+* Fix stat-tracking during parallel sim
+* Additional Visualization options
+* Additional Sim capabilities
+* Data selection/player attribute modification abilities
