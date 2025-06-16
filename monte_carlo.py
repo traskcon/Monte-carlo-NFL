@@ -129,7 +129,7 @@ class Monte_Carlo_Sim:
                 "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
         return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
-    def pass_yds(self):
+    def pass_yds(self, stats):
         # Based on QB, WR, Def distributions, randomly sample and return pass yards on a given play
         qb = self.team_rosters[self.team_rosters["team"] == self.pos_team]["qb"].iloc[0]
         qb_id = self.get_ids([qb])[0]
@@ -142,15 +142,15 @@ class Monte_Carlo_Sim:
         comp_pct = self.comp_pct.get(qb_id, np.mean(list(self.comp_pct.values())))
         catch_pct = self.catch_pct.get(target_id, np.mean(list(self.catch_pct.values())))
         if self.rng.uniform() < ((comp_pct + catch_pct)/2):
-            self.stats["rec"][target] = self.stats["rec"].get(target,0) + 1
+            stats["rec"][target] = stats["rec"].get(target,0) + 1
             # If complete, sample from yardage distributions
             air_yards = self.ay_dists[qb_id].rvs(1)[0]
             yac = self.yac_dists[target_id].rvs(1)[0]
             def_yards = self.pass_def_dists[self.def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
-            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (0.5*lambda_ay+0.5*lambda_yac+lambda_def), target, qb
+            return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (0.5*lambda_ay+0.5*lambda_yac+lambda_def), target, qb, stats
         # Else netyards = 0
-        return 0, target, qb
+        return 0, target, qb, stats
 
     def field_goal_attempt(self):
         kicker = self.team_rosters[self.team_rosters["team"] == self.pos_team]["kicker"].iloc[0]
@@ -199,21 +199,24 @@ class Monte_Carlo_Sim:
         self.verbose = verbose
         with Pool(cpu_count()) as pool:
             results = pool.starmap(self.sim_game, zip([home]*n, [away]*n))
-            home_scores, away_scores = zip(*results) #Unpack list of tuples into two lists
-        return home_scores, away_scores
+            home_scores, away_scores, stats = zip(*results) #Unpack list of tuples into two lists
+        return home_scores, away_scores, stats
     
-    def update_player_stats(self):
-        # At the end of each simulated game, store player stats in a nested dictionary
-        for stat, players in self.stats.items():
-            for player in players:
-                self.sim_stats[stat][player].append(self.stats[stat][player])
+    def update_player_stats(self, stats):
+        # TODO: Clean-up stat tracking code for parallel sim
+        sim_stats = self.sim_stats
+        for game in stats:
+            for stat, players in game.items():
+                for player in players:
+                    sim_stats[stat][player].append(game[stat][player])
+        self.sim_stats = sim_stats
 
     def sim_game(self, home, away):
         self.rng = np.random.default_rng()
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
         scores = {home:0, away:0}
-        self.stats = {"pass_yards":{},"pass_tds":{},"rush_yards":{},"rush_tds":{},
+        stats = {"pass_yards":{},"pass_tds":{},"rush_yards":{},"rush_tds":{},
                      "rec":{}, "rec_yards":{}, "rec_tds":{}}
         self.down, self.distance, self.yardline = 1, 10, 65
         self.pos_team = self.rng.choice((home, away), 1)[0]
@@ -234,20 +237,20 @@ class Monte_Carlo_Sim:
             # Based on what play_type is chosen, run yardage function
             match play_type:
                 case "pass":
-                    net_yards, target, qb = self.pass_yds()
+                    net_yards, target, qb, stats = self.pass_yds(stats)
                     net_yards = min(net_yards, self.yardline+1) #cap yards by yardline
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards,self.yardline,target]
-                    self.stats["pass_yards"][qb] = self.stats["pass_yards"].get(qb, 0) + net_yards
-                    self.stats["rec_yards"][target] = self.stats["rec_yards"].get(target, 0) + net_yards
+                    stats["pass_yards"][qb] = stats["pass_yards"].get(qb, 0) + net_yards
+                    stats["rec_yards"][target] = stats["rec_yards"].get(target, 0) + net_yards
                 case "run":
                     net_yards, rb = self.rush_yds()
                     net_yards = min(net_yards, self.yardline+1)
                     self.yardline -= net_yards
                     self.distance -= net_yards
                     play_details = [net_yards, self.yardline, rb]
-                    self.stats["rush_yards"][rb] = self.stats["rush_yards"].get(rb, 0) + net_yards
+                    stats["rush_yards"][rb] = stats["rush_yards"].get(rb, 0) + net_yards
                 case "field_goal":
                     good, kicker = self.field_goal_attempt()
                     if good:    
@@ -264,10 +267,10 @@ class Monte_Carlo_Sim:
                 self.down, self.distance, self.yardline = 1, 10, 65
                 self.pos_team, self.def_team = self.def_team, self.pos_team
                 if play_type == "pass":
-                    self.stats["pass_tds"][qb] = self.stats["pass_tds"].get(qb, 0) + 1
-                    self.stats["rec_tds"][target] = self.stats["rec_tds"].get(target, 0) + 1
+                    stats["pass_tds"][qb] = stats["pass_tds"].get(qb, 0) + 1
+                    stats["rec_tds"][target] = stats["rec_tds"].get(target, 0) + 1
                 else:
-                    self.stats["rush_tds"][rb] = self.stats["rush_tds"].get(rb, 0) + 1
+                    stats["rush_tds"][rb] = stats["rush_tds"].get(rb, 0) + 1
             elif self.down == 4 and self.distance > 0:
                 # Turnover on downs
                 self.__turnover(downs=True)
@@ -278,8 +281,8 @@ class Monte_Carlo_Sim:
                 self.down += 1
             if self.verbose:
                 self.__print_play_type(play_type, play_details)
-        self.update_player_stats()
-        return scores[home], scores[away]
+        #self.update_player_stats()
+        return scores[home], scores[away], stats
     
     def export_stats(self, home, away, path="./results/", suffix="stats.csv"):
         reformed_stats = {(stat, player): values for stat, players in self.sim_stats.items() for player, values in players.items()}
@@ -295,9 +298,9 @@ if __name__ == "__main__":
     sim_test = Monte_Carlo_Sim()
     home, away = "PHI", "DAL"
     t3 = time()
-    home_scores, away_scores = sim_test.parallel_sim(home, away, 100)
+    home_scores, away_scores, stats = sim_test.parallel_sim(home, away, 100)
     t4 = time()
     print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
-    print(sim_test.stats)
-    sim_test.export_stats(home, away)
+    sim_test.update_player_stats(stats)
+    sim_test.export_stats(home, away, suffix="stats_2.csv")
