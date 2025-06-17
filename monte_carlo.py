@@ -6,7 +6,8 @@ from sklearn.linear_model import LogisticRegression
 from collections import defaultdict
 import warnings
 from tqdm import tqdm
-from multiprocessing import Pool, cpu_count, freeze_support, Manager
+import istarmap
+from multiprocessing import Pool, freeze_support
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 
@@ -193,12 +194,18 @@ class Monte_Carlo_Sim:
                 progress.set(game, message="Simulating Games")
         return home_scores, away_scores
     
-    def parallel_sim(self, home, away, n, verbose=False):
+    def parallel_sim(self, home, away, n, cpu_count, verbose=False, progress = None):
         stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
         self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
-        with Pool(cpu_count()) as pool:
-            results = pool.starmap(self.sim_game, zip([home]*n, [away]*n))
+        with Pool(cpu_count) as pool:
+            results = list()
+            i = 0
+            for result in pool.istarmap(self.sim_game, zip([home]*n, [away]*n)):
+                i += 1
+                results.append(result)
+                if progress is not None:
+                    progress.set(i, message="Simulating Games")
             home_scores, away_scores, stats = zip(*results) #Unpack list of tuples into two lists
         return home_scores, away_scores, stats
     

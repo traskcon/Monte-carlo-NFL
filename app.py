@@ -4,6 +4,7 @@ from shinywidgets import render_plotly, output_widget
 import pandas as pd
 import numpy as np
 from monte_carlo import Monte_Carlo_Sim
+from multiprocessing import cpu_count
 import os
 
 def get_results(dir_path="./results", suffix="stats.csv"):
@@ -56,6 +57,7 @@ app_ui = ui.page_fluid(
                     ui.input_numeric("n", "Number of Games:", 1000, min=1, max=100000),
                     ui.output_text("time_estimate"),
                     ui.input_checkbox("stats","Export Stats"),
+                    ui.input_slider("cpus", "CPUs to Use:", min=1, max=cpu_count(), value=1),
                     ui.input_action_button("run", "Run")
                 ),
                 ui.card(
@@ -116,11 +118,12 @@ def server(input, output, session):
         home, away = team_dict[input.home_team()], team_dict[input.away_team()]
         with ui.Progress(min=1, max=input.n()) as p:
             p.set(message="Simulating Games")
-            home_results, away_results = sim.run_simulations(home, away, input.n(), progress=p)
+            home_results, away_results, stats = sim.parallel_sim(home, away, input.n(), cpu_count=input.cpus(), progress=p)
             home_scores.set(home_results)
             away_scores.set(away_results)
             if input.stats():
                 # currently stats only work in serial simulation, however parallel is significantly faster
+                sim.update_player_stats(stats)
                 sim.export_stats(home, away)
 
     @render.text
@@ -133,7 +136,8 @@ def server(input, output, session):
 
     @render.text
     def time_estimate():
-        return "Estimated Simulation Time: {:.2f} minutes".format(input.n()/(6*60))
+        #TODO: Develop more accurate simulation time estimates
+        return "Estimated Simulation Time: {:.2f} minutes".format(input.n()/(6*60*input.cpus()))
 
     @render.image
     def home_image():
