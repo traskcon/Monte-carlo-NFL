@@ -263,6 +263,8 @@ class Monte_Carlo_Sim:
                     if good:    
                         scores[self.pos_team] += 3
                         self.down, self.distance, self.yardline = 0, 10, 65
+                    else:
+                        self.__turnover(downs=False)
                     play_details = [good, kicker]
                 case "punt":
                     net_yards = self.punt()
