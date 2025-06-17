@@ -174,10 +174,10 @@ class Monte_Carlo_Sim:
         punt_yards = punt_dist.rvs(1)[0]
         return (lambda_pr*punt_returners[self.def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
-    def __turnover(self, downs):
+    def __turnover(self, downs, fg=False):
         self.down = 1 if downs else 0
         self.distance = 10
-        self.yardline = 100 - self.yardline
+        self.yardline = 65 if fg else 100 - self.yardline
         self.pos_team, self.def_team = self.def_team, self.pos_team
 
     def run_simulations(self, home, away, n, verbose=False, progress = None):
@@ -262,7 +262,7 @@ class Monte_Carlo_Sim:
                     good, kicker = self.field_goal_attempt()
                     if good:    
                         scores[self.pos_team] += 3
-                        self.down, self.distance, self.yardline = 0, 10, 65
+                        self.__turnover(downs=False, fg=True)
                     else:
                         self.__turnover(downs=False)
                     play_details = [good, kicker]
