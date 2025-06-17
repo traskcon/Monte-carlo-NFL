@@ -174,10 +174,10 @@ class Monte_Carlo_Sim:
         punt_yards = punt_dist.rvs(1)[0]
         return (lambda_pr*punt_returners[self.def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
-    def __turnover(self, downs, fg=False):
+    def __turnover(self, downs, score):
         self.down = 1 if downs else 0
         self.distance = 10
-        self.yardline = 65 if fg else 100 - self.yardline
+        self.yardline = 65 if score else 100 - self.yardline
         self.pos_team, self.def_team = self.def_team, self.pos_team
 
     def run_simulations(self, home, away, n, verbose=False, progress = None):
@@ -262,19 +262,18 @@ class Monte_Carlo_Sim:
                     good, kicker = self.field_goal_attempt()
                     if good:    
                         scores[self.pos_team] += 3
-                        self.__turnover(downs=False, fg=True)
+                        self.__turnover(downs=False, score=True)
                     else:
                         self.__turnover(downs=False)
                     play_details = [good, kicker]
                 case "punt":
                     net_yards = self.punt()
                     self.yardline -= net_yards if net_yards > 0 else 20
-                    self.__turnover(downs=False)
+                    self.__turnover(downs=False, score=False)
             # Update relevant variables (can happen inside the functions)
             if self.yardline < 0:
                 scores[self.pos_team] += 7 # Assuming automatic extra point on every touchdown (fix later)
-                self.down, self.distance, self.yardline = 1, 10, 65
-                self.pos_team, self.def_team = self.def_team, self.pos_team
+                self.__turnover(downs=True, score=True)
                 if play_type == "pass":
                     stats["pass_tds"][qb] = stats["pass_tds"].get(qb, 0) + 1
                     stats["rec_tds"][target] = stats["rec_tds"].get(target, 0) + 1
@@ -282,7 +281,7 @@ class Monte_Carlo_Sim:
                     stats["rush_tds"][rb] = stats["rush_tds"].get(rb, 0) + 1
             elif self.down == 4 and self.distance > 0:
                 # Turnover on downs
-                self.__turnover(downs=True)
+                self.__turnover(downs=True, score=False)
             elif self.distance <= 0:
                 # First down
                 self.down, self.distance = 1, 10
