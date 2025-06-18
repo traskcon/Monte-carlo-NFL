@@ -8,6 +8,8 @@ import warnings
 from tqdm import tqdm
 import istarmap
 from multiprocessing import Pool, freeze_support
+import json
+import os
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 
@@ -72,6 +74,8 @@ class Monte_Carlo_Sim:
                 print("Result of play: {}".format(play_type))
 
     def build_distributions(self):
+        params_file = "./data/params.json"
+        self.__params = json.load(params_file) if os.path.exists(params_file) else defaultdict(dict)
         # Get player names
         rbs = self.team_rosters[["rb_1","rb_2"]].to_numpy().flatten().tolist()
         kickers = self.team_rosters[["kicker"]].values.flatten().tolist()
@@ -87,6 +91,10 @@ class Monte_Carlo_Sim:
         self.ay_dists = {qb:self.build_yardage_distribution("ay",qb) for qb in self.get_ids(qbs)}
         self.yac_dists = {target:self.build_yardage_distribution("yac",target) for target in self.get_ids(targets)}
         self.pass_def_dists = {defense:self.build_yardage_distribution("pass_def",defense) for defense in teams}
+        # If params file doesn't exist, create one with the fitted params
+        if not os.path.exists("./data/params.json"):
+            with open("./data/params.json", "w") as f:
+                json.dump(self.__params, f)
 
     def build_yardage_distribution(self, dist_type, id):
         # Generalized function for building yardage distributions
@@ -96,12 +104,17 @@ class Monte_Carlo_Sim:
                      "ay":"air_yards", "yac":"yards_after_catch", "pass_def":"yards_gained"}
         # Normal distribution for punts, genextreme for all others
         dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
-        data = self.yard_data[dist_type]
-        yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
-        # Confirm there's enough specific data, otherwise use league average
-        yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
-        yard_data.dropna(inplace=True)
-        params = dist.fit(yard_data)
+        if os.path.exists("./data/params.json"):
+            # Get params from json file if it exists (pre-computed)
+            params = self.__params[yard_keys[dist_type]][id]
+        else:
+            data = self.yard_data[dist_type]
+            yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
+            # Confirm there's enough specific data, otherwise use league average
+            yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
+            yard_data.dropna(inplace=True)
+            params = dist.fit(yard_data)
+            self.__params[yard_keys[dist_type]][id] = params
         yard_dist = dist(*params)
         return yard_dist
     
