@@ -75,7 +75,7 @@ class Monte_Carlo_Sim:
 
     def build_distributions(self):
         params_file = "./data/params.json"
-        self.__params = json.load(params_file) if os.path.exists(params_file) else defaultdict(dict)
+        self.__params = json.load(open(params_file, "r")) if os.path.exists(params_file) else defaultdict(dict)
         # Get player names
         rbs = self.team_rosters[["rb_1","rb_2"]].to_numpy().flatten().tolist()
         kickers = self.team_rosters[["kicker"]].values.flatten().tolist()
@@ -104,6 +104,8 @@ class Monte_Carlo_Sim:
                      "ay":"air_yards", "yac":"yards_after_catch", "pass_def":"yards_gained"}
         # Normal distribution for punts, genextreme for all others
         dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
+        # Use "League Average" id if player is missing their gsis id
+        id = "LA" if isinstance(id, float) else id
         if os.path.exists("./data/params.json"):
             # Get params from json file if it exists (pre-computed)
             params = self.__params[yard_keys[dist_type]][id]
@@ -277,7 +279,7 @@ class Monte_Carlo_Sim:
                         scores[self.pos_team] += 3
                         self.__turnover(downs=False, score=True)
                     else:
-                        self.__turnover(downs=False)
+                        self.__turnover(downs=False, score=False)
                     play_details = [good, kicker]
                 case "punt":
                     net_yards = self.punt()
