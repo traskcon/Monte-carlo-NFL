@@ -40,6 +40,31 @@ team_dict = {"Arizona Cardinals":"ARI","Atlanta Falcons":"ATL","Baltimore Ravens
 
 app_ui = ui.page_fluid(
     ui.navset_tab(
+        ui.nav_panel("Introduction",
+            ui.card(
+                ui.card_header("Introduction"),
+                ui.markdown(
+                    '''
+                    # Monte Carlo NFL Simulations
+
+                    Welcome! This is an app for simulating thousands of NFL games at a play-by-play level.
+                    Detailed information on each tab below:
+
+                    ## Sim
+
+                    [How it works, how to use it, etc.]
+
+                    ## Stat Summary
+
+                    [Shows each player's relevant stats after a simulation has been run and stats exported]
+
+                    ## Visualizations
+
+                    [Visualizations of stat distributions across the thousands of simulated games]
+
+                    '''
+                )
+            )),
         ui.nav_panel("Sim",
             ui.layout_columns(
                 ui.card(
@@ -74,6 +99,7 @@ app_ui = ui.page_fluid(
                 col_widths=(5,2,5), height="90vh"
             )
         ),
+        ui.nav_panel("Stat Summary"),
         ui.nav_panel("Visualizations",
             ui.layout_sidebar(
                 ui.sidebar(
