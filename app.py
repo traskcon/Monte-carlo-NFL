@@ -44,12 +44,12 @@ app_ui = ui.page_fluid(
             ui.layout_columns(
                 ui.card(
                     ui.card_header("Home"),
-                    ui.output_image("home_image", fill=False),
                     ui.input_selectize(
                         "home_team",
                         "Home Team",
                         choices = team_names
                     ),
+                    ui.output_image("home_image", fill=True, width="90%"),
                     ui.output_text("home_score")
                 ),
                 ui.card(
@@ -62,16 +62,16 @@ app_ui = ui.page_fluid(
                 ),
                 ui.card(
                     ui.card_header("Away"),
-                    ui.output_image("away_image", fill=True),
                     ui.input_selectize(
                         "away_team",
                         "Away Team",
                         choices = team_names,
                         selected="Washington Commanders"
                     ),
+                    ui.output_image("away_image", fill=True, width="90%"),
                     ui.output_text("away_score")
                 ),
-                col_widths=(5,2,5)
+                col_widths=(5,2,5), height="90vh"
             )
         ),
         ui.nav_panel("Visualizations",
