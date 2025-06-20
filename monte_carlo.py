@@ -234,6 +234,21 @@ class Monte_Carlo_Sim:
         return home_scores, away_scores
     
     def parallel_sim(self, home, away, n, cpu_count, verbose=False, progress = None):
+        """Simulates n NFL games in parallel.
+        
+        Args:
+            home: String team name abbreviation for home team
+            away: String team name abbreviation for away team
+            n: Integer number of games to simulate (>0)
+            cpu_count: Integer number of cores to split simulations across
+            verbose: Boolean controlling whether play results should be printed
+            progress: Shiny UI object for displaying simulation progress
+        
+        Returns:
+            Two lists, containing final scores for the home and away teams 
+            respectively. Player stats are updated and stored in sim_stats.
+
+        """
         stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
         self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
@@ -256,6 +271,21 @@ class Monte_Carlo_Sim:
                     self.sim_stats[stat][player].append(game[stat][player])
 
     def sim_game(self, home, away):
+        """Stochastically simulate a single NFL game
+        
+        A simulated game consists of 124 total plays/snaps. A flowchart detailing 
+        the logical flow of each simulated snap is included as "Sim_Game_Flowchart.jpg".
+
+        Args:
+            home: String team name abbreviation for home team
+            away: String team name abbreviation for away team
+        
+        Returns:
+            Two integers representing the final score for the home and away team
+            respectively and a dictionary containing all of the player stats.
+
+        """
+        
         self.__rng = np.random.default_rng()
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
@@ -345,7 +375,7 @@ if __name__ == "__main__":
     sim_test = Monte_Carlo_Sim()
     home, away = "PHI", "DAL"
     t3 = time()
-    home_scores, away_scores = sim_test.parallel_sim(home, away, 100)
+    home_scores, away_scores = sim_test.parallel_sim(home, away, 1000, 8)
     t4 = time()
     print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
