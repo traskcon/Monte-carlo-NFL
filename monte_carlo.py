@@ -14,6 +14,51 @@ warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
 
 class Monte_Carlo_Sim:
+    """Class for simulating many NFL games at a play-by-play level.
+    
+    This class simulates NFL games at a play-by-play level by building and 
+    sampling from statistical distributions of relevant stats & playcalling 
+    tendencies. The load_data() and build_distributions() functions initialize
+    these distributions based on historical data. The sim_game() function
+    simulates a single game, which is called by run_simulations() and parallel_sim()
+    to simulate n games. 
+
+    Typical usage example:
+
+        sim = Monte_Carlo_Sim()
+        home_scores, away_scores, stats = sim.parallel_sim("PHI","DAL",10000)
+
+    Attributes:
+        fg_data: A pandas dataframe of historical field goal data (can be privated)
+        yard_data: A dictionary mapping historical yardage data to its name
+        team_rosters: A pandas dataframe containing the team's current roster (private these and make a data dictionary instead)
+        playcall_profiles: A pd-df containing how often each coach calls each 
+            play type by down, distance, and red zone status
+        rb_carries: A dictionary containing what percentage of a team's carries 
+            each RB is projected to receive
+        target_rates: A dictionary containing what percentage of a team's targets
+            each WR, RB, TE is projected to receive
+        id_dict: A dictionary mapping each player's name to their unique ID
+        catch_pct: A dictionary containing each player's catch percent (receptions/targets)
+            by player ID
+        comp_pct: A dictionary contiaining each QB's completion percentage
+            (receptions/targets) by player ID
+        rb_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        rush_def_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        fg_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        punt_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        ay_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        yac_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+        pass_def_dists: A dictionary of RB rush yards per carry (ypc) distributions 
+            by player ID
+    """
+    
     def __init__(self):
         # Load relevant data
         self.load_data()
@@ -25,7 +70,8 @@ class Monte_Carlo_Sim:
         punt_data = pd.read_csv("./data/punts.csv")
         pass_data = pd.read_csv("./data/2024_passes.csv")
         pass_yards = pass_data[pass_data["complete_pass"] == 1]
-        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
+        self.yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, 
+                          "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
         self.team_rosters = pd.read_csv("./data/teams.csv")
         self.playcall_profiles = pd.read_csv("./data/playcall_profiles.csv")
         target_data = pd.read_csv("./data/target_pct.csv", index_col="team")
@@ -131,52 +177,52 @@ class Monte_Carlo_Sim:
     def rush_yds(self):
         # Pick RB1 or RB2 based on snap counts
         # TODO: Add QB runs
-        rb = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team][["rb_1","rb_2"]].iloc[0],1,
-                             p=list(self.rb_carries[self.pos_team].values()))[0]
+        rb = self.__rng.choice(self.team_rosters[self.team_rosters["team"] == self.__pos_team][["rb_1","rb_2"]].iloc[0],1,
+                             p=list(self.rb_carries[self.__pos_team].values()))[0]
         rb_id = self.get_ids([rb])[0]
         # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
         rb_yac = self.rb_dists[rb_id].rvs(1)[0]
-        def_yards = self.rush_def_dists[self.def_team].rvs(1)[0]
+        def_yards = self.rush_def_dists[self.__def_team].rvs(1)[0]
         # Weighting factors
         lambda_rb, lambda_ol, lambda_def = 1, 0.5, 1
         # Offensive line yards before contact for 2024
         ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,"IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,"HOU":2.4,
                 "JAX":2.0,"KC":2.4,"MIA":2.3,"MIN":2.3,"NO":2.5,"NE":2.4,"NYG":2.5,"NYJ":2.1,"TEN":2.1,"PIT":2.2,"PHI":3.2,"LV":1.9,"LAR":2.2,
                 "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
-        return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
+        return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.__pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
     def pass_yds(self, stats):
         # Based on QB, WR, Def distributions, randomly sample and return pass yards on a given play
-        qb = self.team_rosters[self.team_rosters["team"] == self.pos_team]["qb"].iloc[0]
+        qb = self.team_rosters[self.team_rosters["team"] == self.__pos_team]["qb"].iloc[0]
         qb_id = self.get_ids([qb])[0]
         # Choose target based on target_pct
-        target = self.rng.choice(self.team_rosters[self.team_rosters["team"] == self.pos_team].iloc[0,3:11], 1,
-                                 p=list(self.target_rates[self.pos_team].values()))[0]
+        targets = self.team_rosters[self.team_rosters["team"] == self.__pos_team].iloc[0,3:11]
+        target = self.__rng.choice(targets, 1, p=list(self.target_rates[self.__pos_team].values()))[0]
         target_id = self.get_ids([target])[0]
         # Calculate weighted completion pct (qb_cmp_pct, catch_pct)
         # Use league averages for rookies
         comp_pct = self.comp_pct.get(qb_id, np.mean(list(self.comp_pct.values())))
         catch_pct = self.catch_pct.get(target_id, np.mean(list(self.catch_pct.values())))
-        if self.rng.uniform() < ((comp_pct + catch_pct)/2):
+        if self.__rng.uniform() < ((comp_pct + catch_pct)/2):
             stats["rec"][target] = stats["rec"].get(target,0) + 1
             # If complete, sample from yardage distributions
             air_yards = self.ay_dists[qb_id].rvs(1)[0]
             yac = self.yac_dists[target_id].rvs(1)[0]
-            def_yards = self.pass_def_dists[self.def_team].rvs(1)[0]
+            def_yards = self.pass_def_dists[self.__def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
             return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (0.5*lambda_ay+0.5*lambda_yac+lambda_def), target, qb, stats
         # Else netyards = 0
         return 0, target, qb, stats
 
     def field_goal_attempt(self):
-        kicker = self.team_rosters[self.team_rosters["team"] == self.pos_team]["kicker"].iloc[0]
+        kicker = self.team_rosters[self.team_rosters["team"] == self.__pos_team]["kicker"].iloc[0]
         kicker_id = self.get_ids([kicker])[0]
         fg_model = self.fg_dists[kicker_id]
-        make_prob = fg_model.predict_proba(np.array([[self.yardline]]))[0,0]
-        return make_prob >= self.rng.uniform(), kicker
+        make_prob = fg_model.predict_proba(np.array([[self.__yardline]]))[0,0]
+        return make_prob >= self.__rng.uniform(), kicker
     
     def punt(self):
-        punter = self.team_rosters[self.team_rosters["team"] == self.pos_team]["punter"].iloc[0]
+        punter = self.team_rosters[self.team_rosters["team"] == self.__pos_team]["punter"].iloc[0]
         punter_id = self.get_ids([punter])[0]
         punt_dist = self.punt_dists[punter_id]
         # Weighting factors
@@ -187,13 +233,13 @@ class Monte_Carlo_Sim:
                 "JAX":259/27,"KC":266/28,"MIA":214/28,"MIN":284/30,"NO":258/27,"NE":437/29,"NYG":228/29,"NYJ":230/29,"TEN":252/27,"PIT":317/30,"PHI":247/28,"LV":258/27,"LAR":264/28,
                 "BAL":288/30,"LAC":336/27,"SEA":206/30,"SF":237/27,"TB":235/28,"WAS":243/25}
         punt_yards = punt_dist.rvs(1)[0]
-        return (lambda_pr*punt_returners[self.def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
+        return (lambda_pr*punt_returners[self.__def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
     def __turnover(self, downs, score):
-        self.down = 1 if downs else 0
-        self.distance = 10
-        self.yardline = 65 if score else 100 - self.yardline
-        self.pos_team, self.def_team = self.def_team, self.pos_team
+        self.__down = 1 if downs else 0
+        self.__distance = 10
+        self.__yardline = 65 if score else 100 - self.__yardline
+        self.__pos_team, self.__def_team = self.__def_team, self.__pos_team
 
     def run_simulations(self, home, away, n, verbose=False, progress = None):
         # Simulate n games between two teams, returning summary statistics
@@ -225,7 +271,6 @@ class Monte_Carlo_Sim:
         return home_scores, away_scores, stats
     
     def update_player_stats(self, stats):
-        # TODO: Clean-up stat tracking code for parallel sim
         sim_stats = self.sim_stats
         for game in stats:
             for stat, players in game.items():
@@ -234,77 +279,77 @@ class Monte_Carlo_Sim:
         self.sim_stats = sim_stats
 
     def sim_game(self, home, away):
-        self.rng = np.random.default_rng()
+        self.__rng = np.random.default_rng()
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
         scores = {home:0, away:0}
         stats = {"pass_yards":{},"pass_tds":{},"rush_yards":{},"rush_tds":{},
                      "rec":{}, "rec_yards":{}, "rec_tds":{}}
-        self.down, self.distance, self.yardline = 1, 10, 65
-        self.pos_team = self.rng.choice((home, away), 1)[0]
-        self.def_team = home if self.pos_team == away else away
+        self.__down, self.__distance, self.__yardline = 1, 10, 65
+        self.__pos_team = self.__rng.choice((home, away), 1)[0]
+        self.__def_team = home if self.__pos_team == away else away
         for i in range(total_snaps):
             if self.verbose:
-                print("Offense: {}".format(self.pos_team))
-                print("Down: {}, Distance: {:.0f} on the {:.0f} yardline".format(self.down, self.distance, self.yardline))
+                print("Offense: {}".format(self.__pos_team))
+                print("Down: {}, Distance: {:.0f} on the {:.0f} yardline".format(
+                    self.__down, self.__distance, self.__yardline))
             # Set relevant variables
-            redzone = self.yardline <= 20
-            dist_type = self.__determine_dist_type(self.down, self.distance)
+            redzone = self.__yardline <= 20
+            dist_type = self.__determine_dist_type(self.__down, self.__distance)
             # Get coach playcalling tendency for down and distance
-            pos_coach = self.team_rosters.loc[self.team_rosters["team"] == self.pos_team, "coach"].iloc[0]
-            tendencies = self.playcall_profiles.loc[(self.playcall_profiles["coach"]==pos_coach) & (self.playcall_profiles["down"]==self.down) 
+            pos_coach = self.team_rosters.loc[self.team_rosters["team"] == self.__pos_team, "coach"].iloc[0]
+            tendencies = self.playcall_profiles.loc[(self.playcall_profiles["coach"]==pos_coach) & (self.playcall_profiles["down"]==self.__down) 
                                             & (self.playcall_profiles["distance"] == dist_type) & (self.playcall_profiles["red_zone"] == redzone), 
                                             ["pass_prob","run_prob","fg_prob","punt_prob"]].iloc[0]
-            play_type = self.rng.choice(("pass","run","field_goal","punt"), 1, p=tendencies)[0]
+            play_type = self.__rng.choice(("pass","run","field_goal","punt"), 1, p=tendencies)[0]
             # Based on what play_type is chosen, run yardage function
             match play_type:
                 case "pass":
                     net_yards, target, qb, stats = self.pass_yds(stats)
-                    net_yards = min(net_yards, self.yardline+1) #cap yards by yardline
-                    self.yardline -= net_yards
-                    self.distance -= net_yards
-                    play_details = [net_yards,self.yardline,target]
+                    net_yards = min(net_yards, self.__yardline+1) #cap yards by yardline
+                    self.__yardline -= net_yards
+                    self.__distance -= net_yards
+                    play_details = [net_yards,self.__yardline,target]
                     stats["pass_yards"][qb] = stats["pass_yards"].get(qb, 0) + net_yards
                     stats["rec_yards"][target] = stats["rec_yards"].get(target, 0) + net_yards
                 case "run":
                     net_yards, rb = self.rush_yds()
-                    net_yards = min(net_yards, self.yardline+1)
-                    self.yardline -= net_yards
-                    self.distance -= net_yards
-                    play_details = [net_yards, self.yardline, rb]
+                    net_yards = min(net_yards, self.__yardline+1)
+                    self.__yardline -= net_yards
+                    self.__distance -= net_yards
+                    play_details = [net_yards, self.__yardline, rb]
                     stats["rush_yards"][rb] = stats["rush_yards"].get(rb, 0) + net_yards
                 case "field_goal":
                     good, kicker = self.field_goal_attempt()
                     if good:    
-                        scores[self.pos_team] += 3
+                        scores[self.__pos_team] += 3
                         self.__turnover(downs=False, score=True)
                     else:
                         self.__turnover(downs=False, score=False)
                     play_details = [good, kicker]
                 case "punt":
                     net_yards = self.punt()
-                    self.yardline -= net_yards if net_yards > 0 else 20
+                    self.__yardline -= net_yards if net_yards > 0 else 20
                     self.__turnover(downs=False, score=False)
             # Update relevant variables (can happen inside the functions)
-            if self.yardline < 0:
-                scores[self.pos_team] += 7 # Assuming automatic extra point on every touchdown (fix later)
+            if self.__yardline < 0:
+                scores[self.__pos_team] += 7 # Assuming automatic extra point on every touchdown (fix later)
                 self.__turnover(downs=True, score=True)
                 if play_type == "pass":
                     stats["pass_tds"][qb] = stats["pass_tds"].get(qb, 0) + 1
                     stats["rec_tds"][target] = stats["rec_tds"].get(target, 0) + 1
                 else:
                     stats["rush_tds"][rb] = stats["rush_tds"].get(rb, 0) + 1
-            elif self.down == 4 and self.distance > 0:
+            elif self.__down == 4 and self.__distance > 0:
                 # Turnover on downs
                 self.__turnover(downs=True, score=False)
-            elif self.distance <= 0:
+            elif self.__distance <= 0:
                 # First down
-                self.down, self.distance = 1, 10
+                self.__down, self.__distance = 1, 10
             else:
-                self.down += 1
+                self.__down += 1
             if self.verbose:
                 self.__print_play_type(play_type, play_details)
-        #self.update_player_stats()
         return scores[home], scores[away], stats
     
     def export_stats(self, home, away, path="./results/", suffix="stats.csv"):
