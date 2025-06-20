@@ -19,7 +19,6 @@ Back of napkin estimates place the number of simulations required to achieve a r
 * Add Home/description page to shiny app
 * Add Stat Summary page to shiny app
 * Add link to github and youtube channel to top right
-* Fix stat-tracking during parallel sim
 * Additional Visualization options
 * Additional Sim capabilities
 * Data selection/player attribute modification abilities

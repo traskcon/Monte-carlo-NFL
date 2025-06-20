@@ -29,7 +29,9 @@ class Monte_Carlo_Sim:
         home_scores, away_scores, stats = sim.parallel_sim("PHI","DAL",10000)
 
     Attributes:
-        
+        sim_stats:
+        verbose:
+
     """
     
     def __init__(self):
@@ -217,16 +219,18 @@ class Monte_Carlo_Sim:
 
     def run_simulations(self, home, away, n, verbose=False, progress = None):
         # Simulate n games between two teams, returning summary statistics
-        home_scores, away_scores = [], []
+        home_scores, away_scores, stats = [], [], []
         stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
         self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
         for game in tqdm(range(n)):
-            home_score, away_score = self.sim_game(home, away)
+            home_score, away_score, game_stats = self.sim_game(home, away)
             home_scores.append(home_score)
             away_scores.append(away_score)
+            stats.append(game_stats)
             if progress is not None:
                 progress.set(game, message="Simulating Games")
+        self.update_player_stats(stats)
         return home_scores, away_scores
     
     def parallel_sim(self, home, away, n, cpu_count, verbose=False, progress = None):
@@ -242,15 +246,14 @@ class Monte_Carlo_Sim:
                 if progress is not None:
                     progress.set(i, message="Simulating Games")
             home_scores, away_scores, stats = zip(*results) #Unpack list of tuples into two lists
-        return home_scores, away_scores, stats
+        self.update_player_stats(stats)
+        return home_scores, away_scores
     
     def update_player_stats(self, stats):
-        sim_stats = self.sim_stats
         for game in stats:
             for stat, players in game.items():
                 for player in players:
-                    sim_stats[stat][player].append(game[stat][player])
-        self.sim_stats = sim_stats
+                    self.sim_stats[stat][player].append(game[stat][player])
 
     def sim_game(self, home, away):
         self.__rng = np.random.default_rng()
@@ -342,9 +345,8 @@ if __name__ == "__main__":
     sim_test = Monte_Carlo_Sim()
     home, away = "PHI", "DAL"
     t3 = time()
-    home_scores, away_scores, stats = sim_test.parallel_sim(home, away, 100)
+    home_scores, away_scores = sim_test.parallel_sim(home, away, 100)
     t4 = time()
     print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
-    sim_test.update_player_stats(stats)
     sim_test.export_stats(home, away, suffix="stats_2.csv")
