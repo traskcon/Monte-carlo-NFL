@@ -68,3 +68,6 @@ for (hc in coaches[["home_coach"]]) {
     }
   }
 }
+
+# Add code to export profiles to csv
+write.csv(profiles, "./data/playcall_profiles.csv")

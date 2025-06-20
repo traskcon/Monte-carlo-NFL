@@ -4,7 +4,7 @@ Description:
 Play-by-play pass data from 2024
 
 Creation:
-[R function that queries this data from NFLverse]
+Run sim_functions.R, followed by get_yardage_data(2024, "pass", export=TRUE)
 
 Fields:
 * receiver_player_name: String name for targeted receiver
@@ -23,7 +23,7 @@ Description:
 Play-by-play rush data from 2024
 
 Creation:
-[R function that queries this data from NFLverse]
+Run sim_functions.R, followed by get_yardage_data(2024, "run", export=TRUE)
 
 Fields:
 * rusher_player_name: String name for the player that attempted the run
@@ -38,7 +38,7 @@ Description:
 Field goal data from 2024
 
 Creation:
-[R function that queries this data from NFLverse]
+Run sim_functions.R, followed by get_yardage_data(2024, "field goal", export=T)
 
 Fields:
 * kicker_player_name: String name of the player who attempted the kick
@@ -52,7 +52,7 @@ Description:
 Punt data from 2024
 
 Creation:
-[R function that queries this data from NFLverse]
+Run sim_functions.R, followed by get_yardage_data(2024, "punt", export=TRUE)
 
 Fields:
 * punter_player_name: String name of the player who punted
@@ -101,7 +101,7 @@ Description:
 Every NFL player's full name and unique ID
 
 Creation:
-[R function that queries this data from NFLverse]
+Run sim_functions.R, followed by get_player_ids(2025, export=TRUE)
 
 Fields:
 * full_name: String name of player (Firstname Lastname)

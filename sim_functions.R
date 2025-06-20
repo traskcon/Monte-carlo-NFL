@@ -1,21 +1,33 @@
 library(nflverse)
 library(tidyverse)
 
-rushes <- load_pbp(2024) |>
-  filter(play_type == "run") |>
-  mutate(pos_team = ifelse(posteam_type == "home", home_team, away_team)) |>
-  mutate(def_team = ifelse(posteam_type == "home", away_team, home_team)) |>
-  select(rusher_player_name, rusher_player_id, pos_team, def_team, yards_gained)
+get_yardage_data <- function(years, play_type, export=FALSE) {
+  fields <- switch(
+    play_type,
+    "run"= c("rusher_player_name","rusher_player_id","posteam","defteam","yards_gained"),
+    "pass"= c("receiver_player_name","receiver_player_id","passer_player_name",
+              "passer_player_id","complete_pass","air_yards","yards_after_catch",
+              "defteam"),
+    "field goal"= c("kicker_player_name","kicker_player_id","yardline_100","result"),
+    "punt"= c("punter_player_name","punter_player_id","kick_distance"),
+    "Invalid play type"
+  )
+  yard_data <- load_pbp(years) |>
+    filter(play_type == play_type) |>
+    select(fields)
+  if (export) {
+    write.csv(yard_data, paste0("./data/", play_type,"_data.csv"))
+  } else {
+    return(yard_data)
+  }
+}
 
-current_rosters <- load_rosters(2025) |>
-  select(full_name, gsis_id)
-
-punts <- read.csv("c:/users/ctrask/Documents/Monte-carlo-NFL/punts.csv")
-ggplot(punts, aes(x=kick_distance)) + geom_histogram()
-write.csv(rushes, "c:/users/geniu/Documents/Monte-carlo-NFL/2024_passes.csv")
-
-passes <- load_pbp(2024) |>
-  filter(play_type == "pass") |>
-  mutate(def_team = ifelse(posteam_type == "home", away_team, home_team)) |>
-  select(receiver_player_name, receiver_player_id, passer_player_name, 
-         passer_player_id, complete_pass, air_yards, yards_after_catch)
+get_player_ids <- function(years, export=FALSE) {
+  current_rosters <- load_rosters(years) |>
+    select(full_name, gsis_id)
+  if (export) {
+    write.csv(current_rosters, "./data/player_ids.csv")
+  } else {
+    return(current_rosters)
+  }
+}

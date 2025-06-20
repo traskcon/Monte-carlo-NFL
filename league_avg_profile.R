@@ -62,3 +62,5 @@ for (dwn in 1:4) {
     }
   }
 }
+
+write.csv(la_profile, "./data/league_avg_playcall.csv")
