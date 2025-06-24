@@ -6,11 +6,17 @@ import numpy as np
 from monte_carlo import Monte_Carlo_Sim
 from multiprocessing import cpu_count
 import os
+import json
 
 def get_results(dir_path="./results", suffix="stats.csv"):
     file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path,f))]
     game_results = [f.replace(suffix,"") for f in file_names]
     return game_results
+
+def get_saved_scores(dir_path="./results/"):
+    scores_file = dir_path + "scores.json"
+    game_scores = json.load(open(scores_file, "r")) if os.path.exists(scores_file) else dict()
+    return game_scores
 
 sim = Monte_Carlo_Sim()
 
@@ -142,11 +148,15 @@ def server(input, output, session):
     @reactive.event(input.run)
     def get_scores():
         home, away = team_dict[input.home_team()], team_dict[input.away_team()]
+        game_results = get_saved_scores()
         with ui.Progress(min=1, max=input.n()) as p:
             p.set(message="Simulating Games")
             home_results, away_results = sim.parallel_sim(home, away, input.n(), cpu_count=input.cpus(), progress=p)
             home_scores.set(home_results)
             away_scores.set(away_results)
+            game_results[home+"v"+away] = [home_results, away_results]
+            with open("./results/scores.json", "w") as f:
+                json.dump(game_results, f)
             if input.stats():
                 sim.export_stats(home, away)
 
