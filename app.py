@@ -105,7 +105,17 @@ app_ui = ui.page_fluid(
                 col_widths=(5,2,5), height="90vh"
             )
         ),
-        ui.nav_panel("Stat Summary"),
+        ui.nav_panel("Stat Summary",
+            ui.layout_sidebar(
+                ui.sidebar(
+                    ui.input_selectize(
+                        "game_stats",
+                        "Select Matchup",
+                        choices=get_results()
+                    )
+                ),
+                ui.card()
+            )),
         ui.nav_panel("Visualizations",
             ui.layout_sidebar(
                 ui.sidebar(
