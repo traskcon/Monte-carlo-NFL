@@ -4,13 +4,16 @@ from shinywidgets import render_plotly, output_widget
 import pandas as pd
 import numpy as np
 from monte_carlo import Monte_Carlo_Sim
+from helper import get_player_stats
 from multiprocessing import cpu_count
 import os
 import json
 
+pd.set_option("display.float_format", "{:.2f}".format)
+
 def get_results(dir_path="./results", suffix="stats.csv"):
     file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path,f))]
-    game_results = [f.replace(suffix,"") for f in file_names]
+    game_results = [f.replace(suffix,"") for f in file_names if suffix in f]
     return game_results
 
 def get_saved_scores(dir_path="./results/"):
@@ -106,15 +109,22 @@ app_ui = ui.page_fluid(
             )
         ),
         ui.nav_panel("Stat Summary",
-            ui.layout_sidebar(
-                ui.sidebar(
-                    ui.input_selectize(
+            ui.layout_columns(
+                ui.input_selectize(
                         "game_stats",
                         "Select Matchup",
                         choices=get_results()
-                    )
                 ),
-                ui.card()
+                ui.card(
+                    ui.card_header("Home"),
+                    ui.output_table("home_stats")
+                ),
+                ui.card(
+                    ui.card_header("Away"),
+                    ui.output_table("away_stats")
+                ),
+                col_widths=(12,6,6),
+                row_heights=("10vh", "80vh")
             )),
         ui.nav_panel("Visualizations",
             ui.layout_sidebar(
@@ -217,5 +227,17 @@ def server(input, output, session):
                       annotation_text="Average: {:.1f} yards".format(average),
                       annotation_position="top right")
         return fig
+    
+    @render.table
+    def home_stats():
+        matchup = input.game_stats()
+        team = matchup.split("v")[0]
+        return get_player_stats(team, matchup)
+    
+    @render.table
+    def away_stats():
+        matchup = input.game_stats()
+        team = matchup.split("v")[1]
+        return get_player_stats(team, matchup)
 
 app = App(app_ui, server)
