@@ -153,7 +153,7 @@ app_ui = ui.page_fluid(
                     ui.card_header("Stats"),
                     output_widget("stat_hist"),
                     full_screen=True
-                )
+                ), height="90vh"
             )
         ),
     id="tab",
