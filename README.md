@@ -17,7 +17,6 @@ Back of napkin estimates place the number of simulations required to achieve a r
     * Function descriptions/comments as well as high-level overview
 * Write-up proper README
 * Add Home/description page to shiny app
-* Add Stat Summary page to shiny app
 * Add link to github and youtube channel to top right
 * Additional Visualization options
 * Additional Sim capabilities

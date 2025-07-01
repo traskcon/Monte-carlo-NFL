@@ -98,7 +98,7 @@ class Monte_Carlo_Sim:
         params_file = "./data/params.json"
         self.__params = json.load(open(params_file, "r")) if os.path.exists(params_file) else defaultdict(dict)
         # Get player names
-        rbs = self._team_rosters[["rb_1","rb_2"]].to_numpy().flatten().tolist()
+        rbs = self._team_rosters[["qb","rb_1","rb_2"]].to_numpy().flatten().tolist()
         kickers = self._team_rosters[["kicker"]].values.flatten().tolist()
         punters = self._team_rosters[["punter"]].values.flatten().tolist()
         teams = self._team_rosters[["team"]].values.flatten().tolist()
@@ -151,9 +151,8 @@ class Monte_Carlo_Sim:
 
     def rush_yds(self):
         # Pick RB1 or RB2 based on snap counts
-        # TODO: Add QB runs
         rushers = self._team_rosters[self._team_rosters["team"] == self.__pos_team]
-        rb = self.__rng.choice(rushers[["rb_1","rb_2"]].iloc[0], 1, 
+        rb = self.__rng.choice(rushers[["qb","rb_1","rb_2"]].iloc[0], 1, 
                                p=list(self._rb_carries[self.__pos_team].values()))[0]
         rb_id = self.get_ids([rb])[0]
         # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
