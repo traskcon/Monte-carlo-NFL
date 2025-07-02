@@ -11,6 +11,7 @@ import json
 
 pd.set_option("display.float_format", "{:.2f}".format)
 
+# Need to make reactive in order to update after users run simulations
 def get_results(dir_path="./results", suffix="stats.csv"):
     file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path,f))]
     game_results = [f.replace(suffix,"") for f in file_names if suffix in f]
@@ -23,7 +24,7 @@ def get_saved_scores(dir_path="./results/"):
 
 sim = Monte_Carlo_Sim()
 
-test_df = pd.read_csv("./results/PHIvDALstats.csv", header=[0,1], index_col=0)
+test_df = pd.read_csv("./results/BUFvBALstats.csv", header=[0,1], index_col=0)
 players = pd.unique(test_df.columns.get_level_values(1))
 
 team_names = ["Arizona Cardinals","Atlanta Falcons","Baltimore Ravens","Buffalo Bills",
@@ -115,6 +116,10 @@ app_ui = ui.page_fluid(
                         "Select Matchup",
                         choices=get_results()
                 ),
+                ui.input_action_button(
+                    "refresh_stats",
+                    "Refresh Stats"
+                ),
                 ui.card(
                     ui.card_header("Home"),
                     ui.output_table("home_stats")
@@ -123,7 +128,7 @@ app_ui = ui.page_fluid(
                     ui.card_header("Away"),
                     ui.output_table("away_stats")
                 ),
-                col_widths=(12,6,6),
+                col_widths=(-2,4,4,-2,6,6),
                 row_heights=("10vh", "80vh")
             )),
         ui.nav_panel("Visualizations",
@@ -210,6 +215,13 @@ def server(input, output, session):
     def _():
         players = list(pd.unique(get_game()[input.stat()].columns))
         ui.update_selectize("players", choices=players, selected=players[0])
+ 
+    @reactive.effect
+    @reactive.event(input.refresh_stats)
+    def _update():
+        games = get_results()
+        ui.update_selectize("game", choices=games)
+        ui.update_selectize("game_stats", choices=games)
 
     # Read game data
     @reactive.calc
