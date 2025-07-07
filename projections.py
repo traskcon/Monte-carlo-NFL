@@ -4,6 +4,7 @@ import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
 from multiprocessing import freeze_support
+import json
 
 # Create season matchups as dictionary
 # keys = weeks, values = list of (home, away) tuples
@@ -76,14 +77,14 @@ n = 100
 cpus = 10
 
 results = defaultdict(dict)
-stats = defaultdict(list)
+stats = defaultdict(lambda: defaultdict(list))
 
 
 if __name__ == "__main__":
     freeze_support()
 
     for week, games in tqdm(season.items()):
-        for matchup in games:
+        for matchup in tqdm(games):
             name = matchup[0] + "v" + matchup[1]
             home_results, away_results = sim.parallel_sim(matchup[0], matchup[1],n,
                                                         cpus)
@@ -96,9 +97,11 @@ if __name__ == "__main__":
             padded_stats = {player:stats[:n] + fill[len(stats):] 
                             for player, stats in reformed_stats.items()}
             for key, game_stats in padded_stats.items():
-                stats[key].append(np.mean(game_stats))
+                stat, player = key[0], key[1]
+                stats[player][stat].append(np.mean(game_stats))
 
-    print(results)
+    with open("./results/season_scores.json", "w") as f:
+        json.dump(results, f)
 
-    stat_df = pd.DataFrame(stats)
-    stat_df.to_csv("./results/season_proj.csv")
+    with open("./results/season_stats.json", "w") as f:
+        json.dump(stats, f)
