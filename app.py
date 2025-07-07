@@ -62,7 +62,11 @@ app_ui = ui.page_fluid(
 
                     ## Sim
 
-                    [How it works, how to use it, etc.]
+                    The heart of this simulation capability, this tab is where users can specify and run simulations.
+                    Home and Away teams are selected from their respective dropdown menus (NOTE: Currently there is no homefield advantage in the simulation).
+                    Users can also specify how many times the matchup should be simulated and how many CPU cores to allocate to the simulation.
+                    Additionally, if one wants to analyze the player stats for a given matchup, the "Export Stats" button should be selected.
+                    Once ready, press Run and the simulation will start running, returning the average scores of each team when complete.
 
                     ## Stat Summary
 
