@@ -6,9 +6,6 @@ from tqdm import tqdm
 from multiprocessing import freeze_support
 import json
 
-# Create season matchups as dictionary
-# keys = weeks, values = list of (home, away) tuples
-# Potentially more efficient way, look at how nflverse does theirs
 season = {1:[("PHI","DAL"),("LAC","KC"),("ATL","TB"),("CLE","CIN"),("IND","MIA"),
              ("NE","LV"),("NO","ARI"),("NYJ","PIT"),("WAS","NYG"),("JAX","CAR"),
              ("DEN","TEN"),("SEA","SF"),("GB","DET"),("LAR","HOU"),("BUF","BAL"),
@@ -76,14 +73,21 @@ sim = Monte_Carlo_Sim()
 n = 100
 cpus = 10
 
-results = defaultdict(dict)
-stats = defaultdict(lambda: defaultdict(list))
-
-
-if __name__ == "__main__":
-    freeze_support()
-
-    for week, games in tqdm(season.items()):
+def sim_season(sim, season_games, n, cpus, save_stats=True):
+    """Function for simulating an entire NFL season's worth of games
+    
+    Inputs:
+        sim: Monte Carlo Sim object
+        season_games: A dictionary containing the season's matchups
+            keys = weeks (int), values = list of (home, away) tuples
+        n: Number of times to simulate each matchup (int)
+        cpus: Number of cpus to use in parallel (int)
+        save_stats: Boolean indicating whether or not to save stats in json files
+    """
+    results = defaultdict(dict)
+    stats = defaultdict(lambda: defaultdict(list))
+    
+    for week, games in tqdm(season_games.items()):
         for matchup in tqdm(games):
             name = matchup[0] + "v" + matchup[1]
             home_results, away_results = sim.parallel_sim(matchup[0], matchup[1],n,
@@ -103,5 +107,21 @@ if __name__ == "__main__":
     with open("./results/season_scores.json", "w") as f:
         json.dump(results, f)
 
-    with open("./results/season_stats.json", "w") as f:
-        json.dump(stats, f)
+    if save_stats:
+        with open("./results/season_stats.json", "w") as f:
+            json.dump(stats, f)
+
+def calculate_fantasy_points(stats_file="./results/season_stats.json", ppr=True):
+    player_fpts = dict()
+    stat_points = {"pass_yards":0.04,"pass_tds":4,"rush_yards":0.1,"rush_tds":6,
+                   "rec":1,"rec_yards":0.1,"rec_tds":6}
+    player_stats = json.load(open(stats_file, "r"))
+    for player, stats in player_stats.items():
+        player_fpts[player] = 0
+        for stat_name, points in stat_points.items():
+            player_fpts[player] += points * np.sum(stats.get(stat_name,[0]))
+    return player_fpts
+
+if __name__ == "__main__":
+    #freeze_support()
+    print(calculate_fantasy_points())
