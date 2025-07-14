@@ -60,11 +60,11 @@ class Monte_Carlo_Sim:
         self._catch_pct = self.__get_rates(pass_data,"receiver_player_id","complete_pass")
         self._comp_pct = self.__get_rates(pass_data,"passer_player_id","complete_pass")
         self._int_rate = self.__get_rates(pass_data,"passer_player_id","interception")
-        self._def_ints = self.__get_rates(pass_data,"passer_player_id","defteam")
+        self._def_ints = self.__get_rates(pass_data,"defteam","interception")
 
     def __get_rates(self, pass_data:pd.DataFrame, id, stat):
         stat_pct = pass_data[[id,stat]].groupby([id]).mean()
-        return dict(zip(stat_pct.index, stat_pct[id]))
+        return dict(zip(stat_pct.index, stat_pct[stat]))
 
     def get_ids(self, player_names):
         return [self.__id_dict[player] for player in player_names]
@@ -180,10 +180,10 @@ class Monte_Carlo_Sim:
         target_id = self.get_ids([target])[0]
         # Check QB & Defense for interception
         int_pct = self._int_rate.get(qb_id, np.mean(list(self._int_rate.values())))
-        def_int_pct = self.def_ints[self.__def_team]
+        def_int_pct = self._def_ints[self.__def_team]
         if self.__rng.uniform() < ((int_pct + def_int_pct)/2):
             stats["ints"][qb] = stats["ints"].get(qb, 0) + 1
-            air_yards = self.ay_dists[qb_id].rvs(1)[0]
+            air_yards = self._ay_dists[qb_id].rvs(1)[0]
             # ~40% of interception returns are 0 yards, currently assuming all returns are 0 yards
             self.__yardline -= air_yards
             self.__turnover(downs=False, score=False)
@@ -233,7 +233,8 @@ class Monte_Carlo_Sim:
     def run_simulations(self, home, away, n, verbose=False, progress = None):
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores, stats = [], [], []
-        stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
+        stat_names = ["pass_yards","pass_tds","ints","rush_yards","rush_tds",
+                      "rec", "rec_yards", "rec_tds"]
         self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
         for game in tqdm(range(n)):
@@ -262,7 +263,8 @@ class Monte_Carlo_Sim:
             respectively. Player stats are updated and stored in sim_stats.
 
         """
-        stat_names = ["pass_yards","pass_tds","rush_yards","rush_tds", "rec", "rec_yards", "rec_tds"]
+        stat_names = ["pass_yards","pass_tds","ints","rush_yards","rush_tds",
+                      "rec", "rec_yards", "rec_tds"]
         self.sim_stats = {stat:defaultdict(list) for stat in stat_names}
         self.verbose = verbose
         with Pool(cpu_count) as pool:
@@ -303,8 +305,8 @@ class Monte_Carlo_Sim:
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
         scores = {home:0, away:0}
-        stats = {"pass_yards":{},"pass_tds":{},"rush_yards":{},"rush_tds":{},
-                     "rec":{}, "rec_yards":{}, "rec_tds":{}}
+        stats = {"pass_yards":{},"pass_tds":{},"ints":{},"rush_yards":{},
+                 "rush_tds":{},"rec":{}, "rec_yards":{}, "rec_tds":{}}
         self.__down, self.__distance, self.__yardline = 1, 10, 65
         self.__pos_team = self.__rng.choice((home, away), 1)[0]
         self.__def_team = home if self.__pos_team == away else away

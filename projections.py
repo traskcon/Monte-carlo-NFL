@@ -113,8 +113,8 @@ def sim_season(sim, season_games, n, cpus, save_stats=True):
 
 def calculate_fantasy_points(stats_file="./results/season_stats.json", ppr=True):
     player_fpts = dict()
-    stat_points = {"pass_yards":0.04,"pass_tds":4,"rush_yards":0.1,"rush_tds":6,
-                   "rec":1,"rec_yards":0.1,"rec_tds":6}
+    stat_points = {"pass_yards":0.04,"pass_tds":4,"ints":-2,"rush_yards":0.1,
+                   "rush_tds":6,"rec":1,"rec_yards":0.1,"rec_tds":6}
     player_stats = json.load(open(stats_file, "r"))
     for player, stats in player_stats.items():
         player_fpts[player] = 0
@@ -124,4 +124,5 @@ def calculate_fantasy_points(stats_file="./results/season_stats.json", ppr=True)
 
 if __name__ == "__main__":
     #freeze_support()
+    sim_season(sim, season, n, cpus)
     print(calculate_fantasy_points())
