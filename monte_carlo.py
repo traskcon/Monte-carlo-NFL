@@ -123,10 +123,12 @@ class Monte_Carlo_Sim:
 
     def build_yardage_distribution(self, dist_type, id):
         # Generalized function for building yardage distributions
-        id_keys = {"punt":"punter_player_id", "rb":"rusher_player_id", "rush_def":"def_team",
-                   "ay":"passer_player_id", "yac":"receiver_player_id", "pass_def":"def_team"}
-        yard_keys = {"punt":"kick_distance", "rb":"yards_gained", "rush_def":"yards_gained",
-                     "ay":"air_yards", "yac":"yards_after_catch", "pass_def":"yards_gained"}
+        id_keys = {"punt":"punter_player_id","rb":"rusher_player_id",
+                   "rush_def":"def_team","ay":"passer_player_id",
+                   "yac":"receiver_player_id", "pass_def":"def_team"}
+        yard_keys = {"punt":"kick_distance","rb":"yards_gained",
+                     "rush_def":"yards_gained","ay":"air_yards",
+                     "yac":"yards_after_catch", "pass_def":"yards_gained"}
         # Normal distribution for punts, genextreme for all others
         dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
         # Use "League Average" id if player is missing their gsis id
@@ -150,7 +152,8 @@ class Monte_Carlo_Sim:
         # Check there's enough FG specific data to be robust, otherwise use league average
         fg_data = fg_data if len(fg_data) > 5 else self._fg_data
         # Fit Sigmoid/logistic model for fg make probability
-        fg_model = LogisticRegression(random_state=0).fit(fg_data[["yardline_100"]],fg_data["result"])
+        fg_model = LogisticRegression(random_state=0).fit(fg_data[["yardline_100"]],
+                                                          fg_data["result"])
         return fg_model
 
     def rush_yds(self):
@@ -165,9 +168,12 @@ class Monte_Carlo_Sim:
         # Weighting factors
         lambda_rb, lambda_ol, lambda_def = 1, 0.5, 1
         # Offensive line yards before contact for 2024
-        ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,"IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,"HOU":2.4,
-                "JAX":2.0,"KC":2.4,"MIA":2.3,"MIN":2.3,"NO":2.5,"NE":2.4,"NYG":2.5,"NYJ":2.1,"TEN":2.1,"PIT":2.2,"PHI":3.2,"LV":1.9,"LAR":2.2,
-                "BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,"TB":2.8,"WAS":2.9}
+        ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,
+                  "IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,
+                  "HOU":2.4,"JAX":2.0,"KC":2.4,"MIA":2.3,"MIN":2.3,"NO":2.5,
+                  "NE":2.4,"NYG":2.5,"NYJ":2.1,"TEN":2.1,"PIT":2.2,"PHI":3.2,
+                  "LV":1.9,"LAR":2.2,"BAL":3.3,"LAC":2.0,"SEA":2.4,"SF":2.7,
+                  "TB":2.8,"WAS":2.9}
         return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.__pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
     def pass_yds(self, stats):
@@ -218,9 +224,14 @@ class Monte_Carlo_Sim:
         lambda_pr = 1
         lambda_pay = 1
         # Punt Returner projections from Mike Clay: https://g.espncdn.com/s/ffldraftkit/25/NFLDK2025_CS_ClayProjections2025.pdf?adddata=2025CS_ClayProjections2025
-        punt_returners = {"ATL":258/27,"BUF":317/28,"CAR":231/27,"CHI":257/29,"CIN":259/27,"CLE":252/27,"IND":283/28,"ARI":272/28,"DAL":276/27,"DEN":443/29,"DET":410/31,"GB":258/29,"HOU":290/30,
-                "JAX":259/27,"KC":266/28,"MIA":214/28,"MIN":284/30,"NO":258/27,"NE":437/29,"NYG":228/29,"NYJ":230/29,"TEN":252/27,"PIT":317/30,"PHI":247/28,"LV":258/27,"LAR":264/28,
-                "BAL":288/30,"LAC":336/27,"SEA":206/30,"SF":237/27,"TB":235/28,"WAS":243/25}
+        punt_returners = {"ATL":258/27,"BUF":317/28,"CAR":231/27,"CHI":257/29,
+                          "CIN":259/27,"CLE":252/27,"IND":283/28,"ARI":272/28,
+                          "DAL":276/27,"DEN":443/29,"DET":410/31,"GB":258/29,
+                          "HOU":290/30,"JAX":259/27,"KC":266/28,"MIA":214/28,
+                          "MIN":284/30,"NO":258/27,"NE":437/29,"NYG":228/29,
+                          "NYJ":230/29,"TEN":252/27,"PIT":317/30,"PHI":247/28,
+                          "LV":258/27,"LAR":264/28,"BAL":288/30,"LAC":336/27,
+                          "SEA":206/30,"SF":237/27,"TB":235/28,"WAS":243/25}
         punt_yards = punt_dist.rvs(1)[0]
         return (lambda_pr*punt_returners[self.__def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
