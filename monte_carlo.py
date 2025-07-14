@@ -56,11 +56,15 @@ class Monte_Carlo_Sim:
         self._target_rates = target_data.to_dict("index")
         player_ids = pd.read_csv("./data/player_ids.csv", index_col=0)
         self.__id_dict = dict(zip(player_ids.full_name,player_ids.gsis_id))
-        # Calculate Catch, Completion percentages
-        catch_pct = pass_data[["receiver_player_id","complete_pass"]].groupby(["receiver_player_id"]).mean()
-        self._catch_pct = dict(zip(catch_pct.index, catch_pct.complete_pass))
-        comp_pct = pass_data[["passer_player_id","complete_pass"]].groupby(["passer_player_id"]).mean()
-        self._comp_pct = dict(zip(comp_pct.index, comp_pct.complete_pass))
+        # Calculate Catch, Completion, Interception percentages
+        self._catch_pct = self.__get_rates(pass_data,"receiver_player_id","complete_pass")
+        self._comp_pct = self.__get_rates(pass_data,"passer_player_id","complete_pass")
+        self._int_rate = self.__get_rates(pass_data,"passer_player_id","interception")
+        self._def_ints = self.__get_rates(pass_data,"passer_player_id","defteam")
+
+    def __get_rates(self, pass_data:pd.DataFrame, id, stat):
+        stat_pct = pass_data[[id,stat]].groupby([id]).mean()
+        return dict(zip(stat_pct.index, stat_pct[id]))
 
     def get_ids(self, player_names):
         return [self.__id_dict[player] for player in player_names]
@@ -174,6 +178,16 @@ class Monte_Carlo_Sim:
         targets = self._team_rosters[self._team_rosters["team"] == self.__pos_team].iloc[0,3:11]
         target = self.__rng.choice(targets, 1, p=list(self._target_rates[self.__pos_team].values()))[0]
         target_id = self.get_ids([target])[0]
+        # Check QB & Defense for interception
+        int_pct = self._int_rate.get(qb_id, np.mean(list(self._int_rate.values())))
+        def_int_pct = self.def_ints[self.__def_team]
+        if self.__rng.uniform() < ((int_pct + def_int_pct)/2):
+            stats["ints"][qb] = stats["ints"].get(qb, 0) + 1
+            air_yards = self.ay_dists[qb_id].rvs(1)[0]
+            # ~40% of interception returns are 0 yards, currently assuming all returns are 0 yards
+            self.__yardline -= air_yards
+            self.__turnover(downs=False, score=False)
+            return 0, target, qb, stats
         # Calculate weighted completion pct (qb_cmp_pct, catch_pct)
         # Use league averages for rookies
         comp_pct = self._comp_pct.get(qb_id, np.mean(list(self._comp_pct.values())))

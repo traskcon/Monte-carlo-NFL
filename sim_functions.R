@@ -7,7 +7,7 @@ get_yardage_data <- function(years, play_type, export=FALSE) {
     "run"= c("rusher_player_name","rusher_player_id","posteam","defteam","yards_gained"),
     "pass"= c("receiver_player_name","receiver_player_id","passer_player_name",
               "passer_player_id","complete_pass","air_yards","yards_after_catch",
-              "defteam"),
+              "defteam","interception"),
     "field goal"= c("kicker_player_name","kicker_player_id","yardline_100","result"),
     "punt"= c("punter_player_name","punter_player_id","kick_distance"),
     "Invalid play type"
