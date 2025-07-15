@@ -14,8 +14,9 @@ Fields:
 * complete_pass: Binary indicator of whether or not the pass was complete
 * air_yards: Numeric value for distance in yards perpendicular to the line of scrimmage at where the targeted receiver either caught or didn't catch the ball.
 * yards_after_catch: Numeric value for distance in yards perpendicular to the yard line where the receiver made the reception to where the play ended.
-* def_team: String abbreviation for team on defense
-* yards_gained: Numeric yards gained by the possessing team (air_yards + yards_after_catch)
+* defteam: String abbreviation for team on defense
+* yards_gained_pass: Numeric yards gained/lost by the possessing team 
+    (air_yards + yards_after_catch)
 
 ### 2024_rushes.csv
 
@@ -29,8 +30,8 @@ Fields:
 * rusher_player_name: String name for the player that attempted the run
 * rusher_player_id: Unique ID string for player who attempted the run
 * pos_team: String abbreviation for the team with possesion
-* def_team: String abbreviation for team on defense
-* yards_gained: Numeric yards gained by the possessing team
+* defteam: String abbreviation for team on defense
+* yards_gained_rush: Numeric yards gained by the possessing team
 
 ### field_goals.csv
 
