@@ -7,7 +7,7 @@ get_yardage_data <- function(years, play_type, export=FALSE) {
     "run"= c("rusher_player_name","rusher_player_id","posteam","defteam","yards_gained"),
     "pass"= c("receiver_player_name","receiver_player_id","passer_player_name",
               "passer_player_id","complete_pass","air_yards","yards_after_catch",
-              "defteam","interception"),
+              "yards_gained","defteam","interception"),
     "field goal"= c("kicker_player_name","kicker_player_id","yardline_100","result"),
     "punt"= c("punter_player_name","punter_player_id","kick_distance"),
     "Invalid play type"
@@ -15,6 +15,11 @@ get_yardage_data <- function(years, play_type, export=FALSE) {
   yard_data <- load_pbp(years) |>
     filter(play_type == play_type) |>
     select(fields)
+  if (play_type == "run") {
+    yard_data <- rename(yard_data, yards_gained = yards_gained_rush)
+  } else if (play_type == "pass") {
+    yard_data <- rename(yard_data, yards_gained = yards_gained_pass)
+  }
   if (export) {
     write.csv(yard_data, paste0("./data/", play_type,"_data.csv"))
   } else {

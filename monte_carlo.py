@@ -87,8 +87,10 @@ class Monte_Carlo_Sim:
     def __print_play_type(self, play_type, args):
         match play_type:
             case "pass":
+                self._play_counts[play_type][args[2]] += 1
                 print("Result of play: {} to {} for {:.1f} yards, to the {:.0f} yardline".format(play_type,args[2],args[0],args[1]))
             case "run":
+                self._play_counts[play_type][args[2]] += 1
                 print("Result of play: {} by {} for {:.1f} yards, to the {:.0f} yardline".format(play_type,args[2],args[0],args[1]))
             case "field_goal":
                 if args[0]:
@@ -124,11 +126,11 @@ class Monte_Carlo_Sim:
     def build_yardage_distribution(self, dist_type, id):
         # Generalized function for building yardage distributions
         id_keys = {"punt":"punter_player_id","rb":"rusher_player_id",
-                   "rush_def":"def_team","ay":"passer_player_id",
-                   "yac":"receiver_player_id", "pass_def":"def_team"}
-        yard_keys = {"punt":"kick_distance","rb":"yards_gained",
-                     "rush_def":"yards_gained","ay":"air_yards",
-                     "yac":"yards_after_catch", "pass_def":"yards_gained"}
+                   "rush_def":"defteam","ay":"passer_player_id",
+                   "yac":"receiver_player_id", "pass_def":"defteam"}
+        yard_keys = {"punt":"kick_distance","rb":"yards_gained_rush",
+                     "rush_def":"yards_gained_rush","ay":"air_yards",
+                     "yac":"yards_after_catch", "pass_def":"yards_gained_pass"}
         # Normal distribution for punts, genextreme for all others
         dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
         # Use "League Average" id if player is missing their gsis id
@@ -165,8 +167,8 @@ class Monte_Carlo_Sim:
         # Based on RB, OL, Def distributions, randomly sample and return rush yards on a given play
         rb_yac = self._rb_dists[rb_id].rvs(1)[0]
         def_yards = self._rush_def_dists[self.__def_team].rvs(1)[0]
-        # Weighting factors
-        lambda_rb, lambda_ol, lambda_def = 1, 0.5, 1
+        # Weighting factors (Temporarily removed OL contribution)
+        lambda_rb, lambda_ol, lambda_def = 1, 0, 1
         # Offensive line yards before contact for 2024
         ol_ybc = {"ATL":2.2,"BUF":2.5,"CAR":2.7,"CHI":2.5,"CIN":2.7,"CLE":2.5,
                   "IND":2.9,"ARI":3.0,"DAL":2.1,"DEN":2.4,"DET":2.6,"GB":2.4,
@@ -312,6 +314,7 @@ class Monte_Carlo_Sim:
 
         """
         
+        self._play_counts = {"pass":defaultdict(int),"run":defaultdict(int),"field_goal":0,"punt":0}
         self.__rng = np.random.default_rng()
         # Given two teams, simulate a single game and return both teams' scores
         total_snaps = 124 # Average number of offensive snaps per game
@@ -400,9 +403,11 @@ if __name__ == "__main__":
     freeze_support()
     sim_test = Monte_Carlo_Sim()
     home, away = "PHI", "DAL"
-    t3 = time()
+    '''t3 = time()
     home_scores, away_scores = sim_test.parallel_sim(home, away, 1000, 8)
     t4 = time()
     print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
-    sim_test.export_stats(home, away, suffix="stats_2.csv")
+    sim_test.export_stats(home, away, suffix="stats_2.csv")'''
+    sim_test.run_simulations(home, away, 1, verbose=True)
+    print(sim_test._play_counts)
