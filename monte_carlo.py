@@ -40,10 +40,10 @@ class Monte_Carlo_Sim:
         self.build_distributions()
 
     def load_data(self):
-        rush_data = pd.read_csv("./data/2024_rushes.csv")
+        rush_data = pd.read_csv("./data/run_data.csv")
         self._fg_data = pd.read_csv("./data/field_goals.csv")
         punt_data = pd.read_csv("./data/punts.csv")
-        pass_data = pd.read_csv("./data/2024_passes.csv")
+        pass_data = pd.read_csv("./data/pass_data.csv")
         pass_yards = pass_data[pass_data["complete_pass"] == 1]
         self._yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, 
                           "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
