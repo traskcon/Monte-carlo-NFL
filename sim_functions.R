@@ -1,9 +1,9 @@
 library(nflverse)
 library(tidyverse)
 
-get_yardage_data <- function(years, play_type, export=FALSE) {
+get_yardage_data <- function(years, play, export=FALSE) {
   fields <- switch(
-    play_type,
+    play,
     "run"= c("rusher_player_name","rusher_player_id","posteam","defteam","yards_gained"),
     "pass"= c("receiver_player_name","receiver_player_id","passer_player_name",
               "passer_player_id","complete_pass","air_yards","yards_after_catch",
@@ -12,16 +12,14 @@ get_yardage_data <- function(years, play_type, export=FALSE) {
     "punt"= c("punter_player_name","punter_player_id","kick_distance"),
     "Invalid play type"
   )
-  yard_data <- load_pbp(years) |>
-    filter(play_type == play_type) |>
-    select(fields)
-  if (play_type == "run") {
-    yard_data <- rename(yard_data, yards_gained = yards_gained_rush)
-  } else if (play_type == "pass") {
-    yard_data <- rename(yard_data, yards_gained = yards_gained_pass)
+  yard_data <- load_pbp(years) |> filter(play_type == play) |> select(all_of(fields))
+  if (play == "run") {
+    yard_data <- rename(yard_data, yards_gained_rush = yards_gained)
+  } else if (play == "pass") {
+    yard_data <- rename(yard_data, yards_gained_pass = yards_gained)
   }
   if (export) {
-    write.csv(yard_data, paste0("./data/", play_type,"_data.csv"))
+    write.csv(yard_data, paste0("./data/", play,"_data.csv"))
   } else {
     return(yard_data)
   }
