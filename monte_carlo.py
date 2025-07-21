@@ -132,8 +132,8 @@ class Monte_Carlo_Sim:
                      "rush_def":"yards_gained_rush","ay":"air_yards",
                      "yac":"yards_after_catch", "pass_def":"yards_gained_pass"}
         dists = {"punt":"norm", "rb":"genextreme","rush_def":"genextreme",
-                 "ay":"genextreme","yac":"invgamma","pass_def":"genextreme"}
-        # Normal distribution for punts, inverse gamma for yac, genextreme for all others
+                 "ay":"genextreme","yac":"invgauss","pass_def":"genextreme"}
+        # Normal distribution for punts, inverse gaussian for yac, genextreme for all others
         dist = getattr(st, dists[dist_type])
         # Use "League Average" id if player is missing their gsis id
         id = "LA" if isinstance(id, float) else id

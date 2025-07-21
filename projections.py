@@ -104,14 +104,14 @@ def sim_season(sim, season_games, n, cpus, save_stats=True):
                 stat, player = key[0], key[1]
                 stats[player][stat].append(np.mean(game_stats))
 
-    with open("./results/season_scores_2.json", "w") as f:
+    with open("./results/season_scores_invgauss.json", "w") as f:
         json.dump(results, f)
 
     if save_stats:
-        with open("./results/season_stats_2.json", "w") as f:
+        with open("./results/season_stats_invgauss.json", "w") as f:
             json.dump(stats, f)
 
-def calculate_fantasy_points(stats_file="./results/season_stats.json", ppr=True):
+def calculate_fantasy_points(stats_file="./results/season_stats_invgauss.json", ppr=True):
     player_fpts = dict()
     stat_points = {"pass_yards":0.04,"pass_tds":4,"ints":-2,"rush_yards":0.1,
                    "rush_tds":6,"rec":1,"rec_yards":0.1,"rec_tds":6}
@@ -124,5 +124,5 @@ def calculate_fantasy_points(stats_file="./results/season_stats.json", ppr=True)
 
 if __name__ == "__main__":
     #freeze_support()
-    sim_season(sim, season, n, cpus)
+    #sim_season(sim, season, n, cpus)
     print(calculate_fantasy_points())
