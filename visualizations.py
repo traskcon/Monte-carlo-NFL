@@ -4,9 +4,9 @@ import numpy as np
 import scipy.stats as st
 
 param_dict = json.load(open("./data/params.json", "r"))
-player_id = "00-0036389"
+player_id = "00-0036900"
 
-player_params = param_dict["yards_gained"][player_id]
+player_params = param_dict["yards_after_catch"][player_id]
 dist = getattr(st, "genextreme")
 
 player_dist = dist(*player_params)

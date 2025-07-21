@@ -142,6 +142,9 @@ class Monte_Carlo_Sim:
             data = self._yard_data[dist_type]
             yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
             # Confirm there's enough specific data, otherwise use league average
+            if dist_type == "yac":
+                # For YAc distributions, only consider completed passes
+                yard_data = yard_data[yard_data["complete_pass"] == 1]
             yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
             yard_data.dropna(inplace=True)
             params = dist.fit(yard_data)
