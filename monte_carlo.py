@@ -405,11 +405,11 @@ if __name__ == "__main__":
     freeze_support()
     sim_test = Monte_Carlo_Sim()
     home, away = "CLE", "CIN"
-    '''t3 = time()
-    home_scores, away_scores = sim_test.parallel_sim(home, away, 1000, 8)
+    t3 = time()
+    home_scores, away_scores = sim_test.parallel_sim(home, away, 100, 4)
     t4 = time()
     print("Simulation Results - {}: {:.2f}, {}: {:.2f}".format(home, np.mean(home_scores), away, np.mean(away_scores)))
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
-    sim_test.export_stats(home, away, suffix="stats_2.csv")'''
+    '''sim_test.export_stats(home, away, suffix="stats_2.csv")
     sim_test.run_simulations(home, away, 1, verbose=True)
-    print(sim_test.sim_stats)
+    print(sim_test.sim_stats)'''

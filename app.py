@@ -199,8 +199,9 @@ def server(input, output, session):
 
     @render.text
     def time_estimate():
-        #TODO: Develop more accurate simulation time estimates
-        return "Estimated Simulation Time: {:.2f} minutes".format(input.n()/(6*60*input.cpus()))
+        #Empirically derived time estimate
+        time = (input.n()*(0.161-0.05646*np.log(input.cpus()))+5.1)/60
+        return "Estimated Simulation Time: {:.2f} minutes".format(time)
 
     @render.image
     def home_image():

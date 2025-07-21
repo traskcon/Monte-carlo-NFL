@@ -27,7 +27,7 @@ Back of napkin estimates place the number of simulations required to achieve a r
 * Limited defensive modeling
     * Historical passing yards allowed and rushing yards allowed are only defensive stats
     * No player-level defensive data/simulation
-    * No interceptions, fumbles, or sacks
+    * No fumbles or sacks
     * As a result, games are slightly offensively biased and assume no defensive changes from 2024 to 2025
 * Only using a single season's worth of player data (2024)
     * Relatively straightforward to add additional historical data

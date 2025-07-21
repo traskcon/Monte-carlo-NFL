@@ -4,7 +4,7 @@ import numpy as np
 import scipy.stats as st
 import pandas as pd
 
-player_id = "00-0036900"
+player_id = "00-0039040"
 
 pass_data = pd.read_csv("./data/pass_data.csv")
 catch_yards = pass_data[pass_data["complete_pass"] == 1]
