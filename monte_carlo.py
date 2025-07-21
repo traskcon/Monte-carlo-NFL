@@ -44,9 +44,9 @@ class Monte_Carlo_Sim:
         self._fg_data = pd.read_csv("./data/field_goals.csv")
         punt_data = pd.read_csv("./data/punts.csv")
         pass_data = pd.read_csv("./data/pass_data.csv")
-        pass_yards = pass_data[pass_data["complete_pass"] == 1]
+        catch_yards = pass_data[pass_data["complete_pass"] == 1]
         self._yard_data = {"rb":rush_data, "punt":punt_data, "rush_def":rush_data, 
-                          "ay":pass_yards, "yac":pass_yards, "pass_def":pass_yards}
+                          "ay":pass_data, "yac":catch_yards, "pass_def":pass_data}
         self._team_rosters = pd.read_csv("./data/teams.csv")
         self._playcall_profiles = pd.read_csv("./data/playcall_profiles.csv")
         target_data = pd.read_csv("./data/target_pct.csv", index_col="team")
@@ -131,8 +131,10 @@ class Monte_Carlo_Sim:
         yard_keys = {"punt":"kick_distance","rb":"yards_gained_rush",
                      "rush_def":"yards_gained_rush","ay":"air_yards",
                      "yac":"yards_after_catch", "pass_def":"yards_gained_pass"}
-        # Normal distribution for punts, genextreme for all others
-        dist = getattr(st, "norm") if dist_type == "punt" else getattr(st, "genextreme")
+        dists = {"punt":"norm", "rb":"genextreme","rush_def":"genextreme",
+                 "ay":"genextreme","yac":"invgamma","pass_def":"genextreme"}
+        # Normal distribution for punts, inverse gamma for yac, genextreme for all others
+        dist = getattr(st, dists[dist_type])
         # Use "League Average" id if player is missing their gsis id
         id = "LA" if isinstance(id, float) else id
         if os.path.exists("./data/params.json"):
@@ -142,9 +144,6 @@ class Monte_Carlo_Sim:
             data = self._yard_data[dist_type]
             yard_data = data[data[id_keys[dist_type]] == id][yard_keys[dist_type]]
             # Confirm there's enough specific data, otherwise use league average
-            if dist_type == "yac":
-                # For YAc distributions, only consider completed passes
-                yard_data = yard_data[yard_data["complete_pass"] == 1]
             yard_data = yard_data if len(yard_data) > 5 else data[yard_keys[dist_type]]
             yard_data.dropna(inplace=True)
             params = dist.fit(yard_data)
@@ -207,7 +206,7 @@ class Monte_Carlo_Sim:
             stats["rec"][target] = stats["rec"].get(target,0) + 1
             # If complete, sample from yardage distributions
             air_yards = self._ay_dists[qb_id].rvs(1)[0]
-            yac = self._yac_dists[target_id].rvs(1)[0]
+            yac = min(self._yac_dists[target_id].rvs(1)[0],100) #Cap YAC distributions to 100 yards
             def_yards = self._pass_def_dists[self.__def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
             return (lambda_ay*air_yards + lambda_yac*yac + lambda_def*def_yards) / (0.5*lambda_ay+0.5*lambda_yac+lambda_def), target, qb, stats
@@ -405,7 +404,7 @@ class Monte_Carlo_Sim:
 if __name__ == "__main__":
     freeze_support()
     sim_test = Monte_Carlo_Sim()
-    home, away = "PHI", "DAL"
+    home, away = "CLE", "CIN"
     '''t3 = time()
     home_scores, away_scores = sim_test.parallel_sim(home, away, 1000, 8)
     t4 = time()
@@ -413,4 +412,4 @@ if __name__ == "__main__":
     print("Parallel Sim Time: {:.4f}s".format(t4-t3))
     sim_test.export_stats(home, away, suffix="stats_2.csv")'''
     sim_test.run_simulations(home, away, 1, verbose=True)
-    print(sim_test._play_counts)
+    print(sim_test.sim_stats)

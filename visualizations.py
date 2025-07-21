@@ -2,14 +2,23 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as st
+import pandas as pd
 
-param_dict = json.load(open("./data/params.json", "r"))
 player_id = "00-0036900"
 
-player_params = param_dict["yards_after_catch"][player_id]
-dist = getattr(st, "genextreme")
+pass_data = pd.read_csv("./data/pass_data.csv")
+catch_yards = pass_data[pass_data["complete_pass"] == 1]
+yard_data = catch_yards[catch_yards["receiver_player_id"] == player_id]["yards_after_catch"]
 
-player_dist = dist(*player_params)
+param_dict = json.load(open("./data/params.json", "r"))
+
+player_params = param_dict["yards_after_catch"][player_id]
+dist = getattr(st, "invgamma")
+
+params = dist.fit(yard_data)
+
+player_dist = dist(*params)
+print(np.mean(np.clip(player_dist.rvs(10000),-10,100)))
 x = np.linspace(-5,100,1000)
 plt.plot(x, player_dist.pdf(x))
 plt.show()
