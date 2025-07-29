@@ -70,11 +70,14 @@ app_ui = ui.page_fluid(
 
                     ## Stat Summary
 
-                    [Shows each player's relevant stats after a simulation has been run and stats exported]
+                    Because this simulation models player-level actions, the resulting player stats from each matchup can be tabulated and returned.
+                    These are exported in a [Home]v[Away]stats.csv file to the ./results folder.
+                    The Stat Summary tab reads any stats files currently in the ./results folder and displays the average stats for each player.
 
                     ## Visualizations
 
-                    [Visualizations of stat distributions across the thousands of simulated games]
+                    While the Stat Summary tab provides a clean overview of every players stats for a given game, sometimes additional detail is desired.
+                    The Visualizations tab shows the full distribution of player stats generated during simulation.
 
                     '''
                 )

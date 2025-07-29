@@ -17,7 +17,7 @@ def get_player_stats(team, matchup):
     team_stats = reshape_team_stats(team)
     game_file = "./results/" + matchup + "stats.csv"
     stat_df = pd.read_csv(game_file, header=[0,1], index_col=0)
-    stats = ["pass_yards","pass_tds","rush_yards","rush_tds","rec","rec_yards",
+    stats = ["pass_yards","pass_tds","ints","rush_yards","rush_tds","rec","rec_yards",
              "rec_tds"]
     for stat in stats:
         team_stats[stat] = team_stats["Player"].apply(lambda x: 
