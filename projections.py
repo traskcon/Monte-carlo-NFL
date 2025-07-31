@@ -73,7 +73,7 @@ sim = Monte_Carlo_Sim()
 n = 100
 cpus = 10
 
-def sim_season(sim, season_games, n, cpus, save_stats=True):
+def sim_season(sim:Monte_Carlo_Sim, season_games:dict, n:int, cpus:int, save_stats=True):
     """Function for simulating an entire NFL season's worth of games
     
     Inputs:
@@ -111,7 +111,8 @@ def sim_season(sim, season_games, n, cpus, save_stats=True):
         with open("./results/season_stats_invgauss.json", "w") as f:
             json.dump(stats, f)
 
-def calculate_fantasy_points(stats_file="./results/season_stats_invgauss.json", ppr=True):
+def calculate_fantasy_points(stats_file="./results/season_stats_invgauss.json", 
+                             ppr=True) -> dict[str, float]:
     player_fpts = dict()
     stat_points = {"pass_yards":0.04,"pass_tds":4,"ints":-2,"rush_yards":0.1,
                    "rush_tds":6,"rec":1,"rec_yards":0.1,"rec_tds":6}

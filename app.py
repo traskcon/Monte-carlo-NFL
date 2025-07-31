@@ -184,8 +184,8 @@ def server(input, output, session):
         with ui.Progress(min=1, max=input.n()) as p:
             p.set(message="Simulating Games")
             home_results, away_results = sim.parallel_sim(home, away, input.n(), cpu_count=input.cpus(), progress=p)
-            home_scores.set(home_results)
-            away_scores.set(away_results)
+            home_scores.set(list(home_results))
+            away_scores.set(list(away_results))
             game_results[home+"v"+away] = [home_results, away_results]
             with open("./results/scores.json", "w") as f:
                 json.dump(game_results, f)
@@ -206,13 +206,13 @@ def server(input, output, session):
         time = (input.n()*(0.161-0.05646*np.log(input.cpus()))+5.1)/60
         return "Estimated Simulation Time: {:.2f} minutes".format(time)
 
-    @render.image
+    @render.image #type: ignore
     def home_image():
         source = "./logos/" + input.home_team().replace(" ","_") + ".svg"
         img = {"src": source, "width":"100%"}
         return img
     
-    @render.image
+    @render.image #type: ignore
     def away_image():
         source = "./logos/" + input.away_team().replace(" ","_") + ".svg"
         img = {"src": source, "width":"100%"}

@@ -62,18 +62,18 @@ class Monte_Carlo_Sim:
         self._int_rate = self.__get_rates(pass_data,"passer_player_id","interception")
         self._def_ints = self.__get_rates(pass_data,"defteam","interception")
 
-    def __get_rates(self, pass_data:pd.DataFrame, id, stat):
+    def __get_rates(self, pass_data:pd.DataFrame, id:str, stat:str) -> dict:
         stat_pct = pass_data[[id,stat]].groupby([id]).mean()
         return dict(zip(stat_pct.index, stat_pct[stat]))
 
-    def get_ids(self, player_names):
+    def get_ids(self, player_names:list[str]) -> list[str]:
         return [self.__id_dict[player] for player in player_names]
     
-    def get_names(self, player_ids):
+    def get_names(self, player_ids:list[str]) -> list[str]:
         name_dict = {id: name for name, id in self.__id_dict.items()}
         return [name_dict[id] for id in player_ids]
     
-    def __determine_dist_type(self, down, distance):
+    def __determine_dist_type(self, down:int, distance:float) -> str:
         if down == 1:
             return "All"
         else:
@@ -84,7 +84,7 @@ class Monte_Carlo_Sim:
             else:
                 return "Mid"
 
-    def __print_play_type(self, play_type, args):
+    def __print_play_type(self, play_type:str, args):
         match play_type:
             case "pass":
                 self._play_counts[play_type][args[2]] += 1
@@ -123,7 +123,7 @@ class Monte_Carlo_Sim:
             with open("./data/params.json", "w") as f:
                 json.dump(self.__params, f)
 
-    def build_yardage_distribution(self, dist_type, id):
+    def build_yardage_distribution(self, dist_type:str, id:str):
         # Generalized function for building yardage distributions
         id_keys = {"punt":"punter_player_id","rb":"rusher_player_id",
                    "rush_def":"defteam","ay":"passer_player_id",
@@ -151,7 +151,7 @@ class Monte_Carlo_Sim:
         yard_dist = dist(*params)
         return yard_dist
     
-    def fit_fg_model(self, kicker):
+    def fit_fg_model(self, kicker:str) -> LogisticRegression:
         fg_data = self._fg_data[self._fg_data["kicker_player_id"] == kicker]
         # Check there's enough FG specific data to be robust, otherwise use league average
         fg_data = fg_data if len(fg_data) > 5 else self._fg_data
@@ -160,7 +160,7 @@ class Monte_Carlo_Sim:
                                                           fg_data["result"])
         return fg_model
 
-    def rush_yds(self):
+    def rush_yds(self) -> tuple[float, str]:
         # Pick RB1 or RB2 based on snap counts
         rushers = self._team_rosters[self._team_rosters["team"] == self.__pos_team]
         rb = self.__rng.choice(rushers[["qb","rb_1","rb_2"]].iloc[0], 1, 
@@ -180,7 +180,7 @@ class Monte_Carlo_Sim:
                   "TB":2.8,"WAS":2.9}
         return (lambda_rb*rb_yac + lambda_def*def_yards + lambda_ol*ol_ybc[self.__pos_team]) / (lambda_rb+lambda_ol+lambda_def), rb
     
-    def pass_yds(self, stats):
+    def pass_yds(self, stats:dict) -> tuple[float, str, str, dict]:
         # Based on QB, WR, Def distributions, randomly sample and return pass yards on a given play
         qb = self._team_rosters[self._team_rosters["team"] == self.__pos_team]["qb"].iloc[0]
         qb_id = self.get_ids([qb])[0]
@@ -213,14 +213,14 @@ class Monte_Carlo_Sim:
         # Else netyards = 0
         return 0, target, qb, stats
 
-    def field_goal_attempt(self):
+    def field_goal_attempt(self) -> tuple[bool, str]:
         kicker = self._team_rosters[self._team_rosters["team"] == self.__pos_team]["kicker"].iloc[0]
         kicker_id = self.get_ids([kicker])[0]
         fg_model = self._fg_dists[kicker_id]
         make_prob = fg_model.predict_proba(np.array([[self.__yardline]]))[0,0]
         return make_prob >= self.__rng.uniform(), kicker
     
-    def punt(self):
+    def punt(self) -> float:
         punter = self._team_rosters[self._team_rosters["team"] == self.__pos_team]["punter"].iloc[0]
         punter_id = self.get_ids([punter])[0]
         punt_dist = self._punt_dists[punter_id]
@@ -239,13 +239,13 @@ class Monte_Carlo_Sim:
         punt_yards = punt_dist.rvs(1)[0]
         return (lambda_pr*punt_returners[self.__def_team]+lambda_pay*punt_yards)/(lambda_pr+lambda_pay)
     
-    def __turnover(self, downs, score):
+    def __turnover(self, downs:int, score:bool):
         self.__down = 1 if downs else 0
         self.__distance = 10
         self.__yardline = 65 if score else 100 - self.__yardline
         self.__pos_team, self.__def_team = self.__def_team, self.__pos_team
 
-    def run_simulations(self, home, away, n, verbose=False, progress = None):
+    def run_simulations(self, home:str, away:str, n:int, verbose=False, progress = None):
         # Simulate n games between two teams, returning summary statistics
         home_scores, away_scores, stats = [], [], []
         stat_names = ["pass_yards","pass_tds","ints","rush_yards","rush_tds",
@@ -262,7 +262,8 @@ class Monte_Carlo_Sim:
         self.update_player_stats(stats)
         return home_scores, away_scores
     
-    def parallel_sim(self, home, away, n, cpu_count, verbose=False, progress = None):
+    def parallel_sim(self, home:str, away:str, n:int, cpu_count:int, 
+                     verbose=False, progress = None) -> tuple[list, list]:
         """Simulates n NFL games in parallel.
         
         Args:
@@ -285,22 +286,22 @@ class Monte_Carlo_Sim:
         with Pool(cpu_count) as pool:
             results = list()
             i = 0
-            for result in pool.istarmap(self.sim_game, zip([home]*n, [away]*n)):
+            for result in pool.istarmap(self.sim_game, zip([home]*n, [away]*n)): #type: ignore
                 i += 1
                 results.append(result)
                 if progress is not None:
                     progress.set(i, message="Simulating Games")
             home_scores, away_scores, stats = zip(*results) #Unpack list of tuples into two lists
-        self.update_player_stats(stats)
-        return home_scores, away_scores
+        self.update_player_stats(list(stats))
+        return list(home_scores), list(away_scores)
     
-    def update_player_stats(self, stats):
+    def update_player_stats(self, stats:list[dict]):
         for game in stats:
             for stat, players in game.items():
                 for player in players:
                     self.sim_stats[stat][player].append(game[stat][player])
 
-    def sim_game(self, home, away):
+    def sim_game(self, home:str, away:str) -> tuple[int, int, dict]:
         """Stochastically simulate a single NFL game
         
         A simulated game consists of 124 total plays/snaps. A flowchart detailing 
@@ -335,7 +336,7 @@ class Monte_Carlo_Sim:
             redzone = self.__yardline <= 20
             dist_type = self.__determine_dist_type(self.__down, self.__distance)
             # Get coach playcalling tendency for down and distance
-            pos_coach = self._team_rosters.loc[self._team_rosters["team"] == self.__pos_team, "coach"].iloc[0]
+            pos_coach = self._team_rosters[self._team_rosters["team"] == self.__pos_team]["coach"].iloc[0]
             tendencies = self._playcall_profiles.loc[(self._playcall_profiles["coach"]==pos_coach) & 
                             (self._playcall_profiles["down"]==self.__down) & 
                             (self._playcall_profiles["distance"] == dist_type) & 
@@ -392,7 +393,7 @@ class Monte_Carlo_Sim:
                 self.__print_play_type(play_type, play_details)
         return scores[home], scores[away], stats
     
-    def export_stats(self, home, away, path="./results/", suffix="stats.csv"):
+    def export_stats(self, home:str, away:str, path="./results/", suffix="stats.csv"):
         reformed_stats = {(stat, player): values for stat, players in self.sim_stats.items() for player, values in players.items()}
         n = max(len(value) for value in reformed_stats.values())
         fill = [0] * n
