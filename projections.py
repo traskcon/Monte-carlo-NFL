@@ -104,14 +104,14 @@ def sim_season(sim:Monte_Carlo_Sim, season_games:dict, n:int, cpus:int, save_sta
                 stat, player = key[0], key[1]
                 stats[player][stat].append(np.mean(game_stats))
 
-    with open("./results/season_scores_invgauss.json", "w") as f:
+    with open("./results/season_scores_MK1.json", "w") as f:
         json.dump(results, f)
 
     if save_stats:
-        with open("./results/season_stats_invgauss.json", "w") as f:
+        with open("./results/season_stats_MK1.json", "w") as f:
             json.dump(stats, f)
 
-def calculate_fantasy_points(stats_file="./results/season_stats_invgauss.json", 
+def calculate_fantasy_points(stats_file="./results/season_stats_MK1.json", 
                              ppr=True) -> dict[str, float]:
     player_fpts = dict()
     stat_points = {"pass_yards":0.04,"pass_tds":4,"ints":-2,"rush_yards":0.1,
@@ -124,6 +124,6 @@ def calculate_fantasy_points(stats_file="./results/season_stats_invgauss.json",
     return player_fpts
 
 if __name__ == "__main__":
-    #freeze_support()
-    #sim_season(sim, season, n, cpus)
-    print(calculate_fantasy_points())
+   freeze_support()
+   sim_season(sim, season, n, cpus)
+   print(calculate_fantasy_points())

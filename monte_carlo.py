@@ -206,6 +206,8 @@ class Monte_Carlo_Sim:
             stats["rec"][target] = stats["rec"].get(target,0) + 1
             # If complete, sample from yardage distributions
             air_yards = self._ay_dists[qb_id].rvs(1)[0]
+            # TEMP: Reduce ADOT for RB targets
+            air_yards = air_yards - 5 if target in self._team_rosters[["rb_1","rb_2"]].to_numpy() else air_yards
             yac = min(self._yac_dists[target_id].rvs(1)[0],100) #Cap YAC distributions to 100 yards
             def_yards = self._pass_def_dists[self.__def_team].rvs(1)[0]
             lambda_ay, lambda_yac, lambda_def = 1, 1, 1
