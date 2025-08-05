@@ -168,6 +168,23 @@ app_ui = ui.page_fluid(
                 ), height="90vh"
             )
         ),
+        ui.nav_panel("Scores",
+            ui.layout_sidebar(
+                ui.sidebar(
+                    ui.input_selectize(
+                        "game_scores",
+                        "Select Matchup",
+                        choices=get_results()
+                    ),
+                    position="left"
+                ),
+                ui.card(
+                    ui.card_header("Scores"),
+                    output_widget("score_plot"),
+                    full_screen=True
+                ), height="90vh"
+            )
+        ),
     id="tab",
     )
 )
@@ -246,6 +263,13 @@ def server(input, output, session):
         fig.add_vline(x=average, line_color="red",
                       annotation_text="Average: {:.1f} yards".format(average),
                       annotation_position="top right")
+        return fig
+    
+    @render_plotly
+    def score_plot():
+        scores = get_saved_scores()[input.game_scores()]
+        data = pd.DataFrame({"home":scores[0], "away":scores[1]})
+        fig = px.density_heatmap(data, x="home", y="away")
         return fig
     
     @render.table
