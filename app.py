@@ -24,7 +24,7 @@ def get_saved_scores(dir_path="./results/"):
 
 sim = Monte_Carlo_Sim()
 
-test_df = pd.read_csv("./results/BUFvBALstats.csv", header=[0,1], index_col=0)
+test_df = pd.read_csv("./results/PHIvDALstats.csv", header=[0,1], index_col=0)
 players = pd.unique(test_df.columns.get_level_values(1))
 
 team_names = ["Arizona Cardinals","Atlanta Falcons","Baltimore Ravens","Buffalo Bills",
@@ -174,7 +174,7 @@ app_ui = ui.page_fluid(
                     ui.input_selectize(
                         "game_scores",
                         "Select Matchup",
-                        choices=get_results()
+                        choices=list(get_saved_scores().keys())
                     ),
                     position="left"
                 ),
@@ -245,8 +245,10 @@ def server(input, output, session):
     @reactive.event(input.refresh_stats)
     def _update():
         games = get_results()
+        scores = get_saved_scores()
         ui.update_selectize("game", choices=games)
         ui.update_selectize("game_stats", choices=games)
+        ui.update_selectize("game_scores", choices=scores)
 
     # Read game data
     @reactive.calc
@@ -269,7 +271,9 @@ def server(input, output, session):
     def score_plot():
         scores = get_saved_scores()[input.game_scores()]
         data = pd.DataFrame({"home":scores[0], "away":scores[1]})
-        fig = px.density_heatmap(data, x="home", y="away")
+        fig = px.density_heatmap(data, x="home", y="away", 
+                                 nbinsx=max(scores[0])-min(scores[0]),
+                                 nbinsy=max(scores[1])-min(scores[1]))
         return fig
     
     @render.table
