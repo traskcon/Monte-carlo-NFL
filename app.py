@@ -270,10 +270,12 @@ def server(input, output, session):
     @render_plotly
     def score_plot():
         scores = get_saved_scores()[input.game_scores()]
+        home, away = input.game_scores().split('v')
         data = pd.DataFrame({"home":scores[0], "away":scores[1]})
-        fig = px.density_heatmap(data, x="home", y="away", 
-                                 nbinsx=max(scores[0])-min(scores[0]),
-                                 nbinsy=max(scores[1])-min(scores[1]))
+        fig = px.density_heatmap(data, x='home', y='away',
+                                 labels={'home':home,  'away':away},
+                                 nbinsx=max(scores[0])+1,
+                                 nbinsy=max(scores[1])+1)
         return fig
     
     @render.table
